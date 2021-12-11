@@ -1,0 +1,103 @@
+{
+    "system": {},
+    "system_url": "http://portal-QA.devcloud.pepperdash.com/templates/0f50640b-bc89-42d5-998f-81d137d3fc98#/template_summary",
+    "template": {
+        "devices": [
+            {
+                "key": "processor",
+                "uid": 0,
+                "type": "rmc3",
+                "name": "RMC3",
+                "group": "processor",
+                "supportedConfigModes": [
+                    "compliance",
+                    "essentials"
+                ],
+                "supportedSystemTypes": [
+                    "hudType",
+                    "presType",
+                    "vtcType",
+                    "custom"
+                ],
+                "supportsCompliance": true,
+                "properties": {}
+            },
+            {
+                "key": "enlighted-lighting-1",
+                "uid": 1,
+                "name": "Enlighted Energy Manager 1",
+                "type": "enlightedlighting",
+                "group": "plugin",
+                "parentDeviceKey": "processor",
+                "properties": {
+                    "control": {
+                        "method": "https",
+                        "tcpSshProperties": {
+                            "address": "192.168.1.17",
+                            "port": 443
+                        }
+                    },
+                    "pollTimeMs": 60000,
+                    "warningTimeoutMs": 120000,
+                    "errorTimeoutMs": 180000,
+                    "apiKey": "",
+                    "presets": {
+                        "preset1": {
+                            "name": "Bright",
+                            "id": "51"
+                        },
+                        "preset2": {
+                            "name": "Medium",
+                            "id": "52"
+                        },
+                        "preset3": {
+                            "name": "Mid-Low",
+                            "id": "53"
+                        },
+                        "preset4": {
+                            "name": "Low",
+                            "id": "54"
+                        },
+                        "preset5": {
+                            "name": "Off",
+                            "id": "55"
+                        }
+                    },                  
+                }
+            },
+            {
+                "key": "lighting-bridge-1",
+                "uid": 2,
+                "name": "Lighting Bridge 1",
+                "group": "api",
+                "type": "eiscApiAdvanced",
+                "properties": {
+                    "control": {
+                        "tcpSshProperties": {
+                            "address": "127.0.0.2",
+                            "port": 0
+                        },
+                        "ipid": "B0",
+                        "method": "ipidTcp"
+                    },
+                    "devices": [
+                        {
+                            "deviceKey": "enlighted-lighting-1",
+                            "joinStart": 1
+                        }
+                    ]
+                }
+            }
+        ],
+        "info": {
+            "comment": "",
+            "lastModifiedDate": "2017-03-06T23:14:40.290Z",
+            "lastUid": 2,
+            "processorType": "rmc3",
+            "requiredControlSofwareVersion": "",
+            "systemType": "huddle"
+        },
+        "rooms": [],
+        "tieLines": []
+    }
+}
