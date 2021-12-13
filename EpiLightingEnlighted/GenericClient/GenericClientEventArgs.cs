@@ -14,7 +14,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         public int Code { get; set; }
 
         /// <summary>
-        /// CClient response content string
+        /// Client response content string
         /// </summary>
         public string ContentString { get; set; }
 
