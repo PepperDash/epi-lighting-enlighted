@@ -119,8 +119,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                 {
                     if (!args.DeviceOnLine) return;
 
-                    trilist.SetString(joinMap.Name.JoinNumber, Name);
-                  
+                    trilist.SetString(joinMap.Name.JoinNumber, Name);                  
                 };
             }
             catch (Exception e)
@@ -153,9 +152,12 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                 Debug.Console(1, this, "Respone Code: {0}", args.Code);
 
                 if (string.IsNullOrEmpty(args.ContentString)) return;
+
+
                 var obj = JsonConvert.DeserializeObject<EnlightedLightingResponseObject>(args.ContentString);
                 if (obj != null) { }
                     //ParseSessionData(obj);
+                //what data sets do you need to pull out of the response  - So far JKD pulled out CODE and STRING. If you need more, do more.
             }
             catch (Exception e)
             {
@@ -167,47 +169,23 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
             }
         }
 
-        //private void ParseSessionData(EnlightedLightingResponseObject obj)
-        //{
-        //    if (obj == null || obj.Meta == null || obj.Data == null) return;
+        private void ParseResponse(EnlightedLightingResponseObject obj)
+        {
+            if (obj == null) return;
 
-        //    try
-        //    {
-        //        // parse session data		
-        //        //var code = obj.Meta.Code;
-        //        //var message = obj.Meta.Message.ToLower();
-        //        //var dataCount = obj.Data.Count;
-        //        Debug.Console(1, this, "ParseSessionData: code-{0}, messgae-{1} | dataCount-{2}", code, message, dataCount);
-        //        /*
-        //         * GET/bsessions response answers:
-        //         * code 200, message '{number of activee sessions}'
-        //         * - active breakaway sessions detailed in data structure
-        //         * 
-        //         * code 204, message 'No active session'
-        //         * - currently no active session, no data structure provided
-        //         * 
-        //         * GET/bsessions/{session_id} response answers:
-        //         * code 200, message '1'
-        //         * - session exists, Data[0] contains the requested informaiton
-        //         * 
-        //         * code 404, message 'session {session_id} is not active'
-        //         * - session does not exist, no data structure provided
-        //        */
-        //        if (code.Equals(204) && message.Contains("no active session"))
-        //        {
+            try
+            {
 
-        //        }
+                //Debug.Console(1, this, "ParseResponse: code-{0}, messgae-{1} | dataCount-{2}", obj.);
 
-        //        if (dataCount == 0) return;             
-            
-        //    }
-        //    catch (Exception e)
-        //    {
-        //        Debug.Console(1, this, Debug.ErrorLogLevel.Error, "ParseSessionData Exception: {0}", e.Message);
-        //        Debug.Console(2, this, Debug.ErrorLogLevel.Error, "ParseSessionData Stack Trace: {0}", e.StackTrace);
-        //        if (e.InnerException != null) Debug.Console(1, this, Debug.ErrorLogLevel.Error, "ParseSessionData Inner Exception: {0}", e.InnerException);
-        //    }
-        //}
+            }
+            catch (Exception e)
+            {
+                Debug.Console(1, this, Debug.ErrorLogLevel.Error, "ParseResponse Exception: {0}", e.Message);
+                Debug.Console(2, this, Debug.ErrorLogLevel.Error, "ParseResponse Stack Trace: {0}", e.StackTrace);
+                if (e.InnerException != null) Debug.Console(1, this, Debug.ErrorLogLevel.Error, "ParseResponse Inner Exception: {0}", e.InnerException);
+            }
+        }
 
 
         /// <summary>

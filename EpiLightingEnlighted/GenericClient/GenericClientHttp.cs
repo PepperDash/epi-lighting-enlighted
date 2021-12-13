@@ -13,7 +13,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
     public class GenericClientHttp : IRestfulComms
     {
         private const string DefaultRequestType = "GET";
-        private readonly HttpClient _client;
+        private readonly HttpClient _client;        
 
         private readonly CrestronQueue<Action> _requestQueue = new CrestronQueue<Action>(20);
 
@@ -139,6 +139,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                             return;
                         }
 
+                        
                         OnResponseRecieved(new GenericClientResponseEventArgs(response.Code, response.ContentString));
                     }));
                 }
@@ -158,20 +159,9 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
             }
             catch (Exception e)
             {
-                if (e.Message.Contains("No Endpoint"))
-                {
-                    Debug.Console(1, this, Debug.ErrorLogLevel.Error, "SessionManager: No endpoint");
-                }
-                else if (e.Message.Contains("Invalid URI:"))
-                {
-                    Debug.Console(1, this, Debug.ErrorLogLevel.Error, "SessionManager: Invalid URI");
-                }
-                else
-                {
-                    Debug.Console(1, this, Debug.ErrorLogLevel.Error, "SendRequest Exception: {0}", e.Message);
-                    Debug.Console(2, this, Debug.ErrorLogLevel.Error, "SendRequest Stack Trace: {0}", e.StackTrace);
-                    if (e.InnerException != null) Debug.Console(1, this, Debug.ErrorLogLevel.Error, "SendRequest Inner Exception: {0}", e.InnerException);
-                }
+                Debug.Console(1, this, Debug.ErrorLogLevel.Error, "SendRequest Exception: {0}", e.Message);
+                Debug.Console(2, this, Debug.ErrorLogLevel.Error, "SendRequest Stack Trace: {0}", e.StackTrace);
+                if (e.InnerException != null) Debug.Console(1, this, Debug.ErrorLogLevel.Error, "SendRequest Inner Exception: {0}", e.InnerException);
             }
         }
 

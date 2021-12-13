@@ -23,7 +23,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         //[JsonProperty("meta")]
         //public MetaConfig Meta { get; set; }
 
-        //[JsonProperty("data")]
+        //[JsonProperty("data", NullValueHandling = NullValueHandling.Ignore)]
         //public List<DataConfig> Data { get; set; }
     }
 }
