@@ -4,7 +4,7 @@ using PepperDash.Core;
 namespace PepperDash.Essentials.Plugin.EnlightedLighting
 {
     /// <summary>
-    /// Evertz Nucleus Client Response Event Args
+    /// Client Response Event Args
     /// </summary>
     public class GenericClientResponseEventArgs : EventArgs
     {

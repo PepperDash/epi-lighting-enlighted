@@ -10,6 +10,14 @@ using Crestron.SimplSharpPro.DeviceSupport;
 
 namespace PepperDash.Essentials.Plugin.EnlightedLighting
 {
+
+    public class SpecialApiKeyHandling
+    {
+        public bool HeaderUsesApiKey { get; set; }
+        public string ApiKey { get; set; }
+        public string ApiKeyUsername { get; set; }
+    }
+
 	/// <summary>
 	/// Plugin device template for third party devices that use IBasicCommunication
 	/// </summary>
@@ -25,12 +33,15 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         /// It is often desirable to store the config
         /// </summary>
         private EnlightedLightingConfig _config;
-
         private readonly IRestfulComms _comms;
-
         private readonly long _pollTimeMs;
         private readonly long _warningTimeoutMs;
         private readonly long _errorTimeoutMs;
+
+        public BoolFeedback OnlineFeedback { get; private set; }
+        public IntFeedback StatusFeedback { get; private set; }
+
+        SpecialApiKeyHandling objSpecialApiKeyHandling = new SpecialApiKeyHandling();
 
 		/// <summary>
 		/// Plugin device constructor for devices that need IBasicCommunication
@@ -45,12 +56,10 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
             Debug.Console(0, this, "Constructing new Enlighted Lighting plugin instance using key: '{0}', name: '{1}'", key, name);
 
 			// TODO [X] Update the constructor as needed for the plugin device being developed
-
 			_config = config;
-
             _pollTimeMs = (config.PollTimeMs > 0) ? config.PollTimeMs : 60000;
             _warningTimeoutMs = (config.WarningTimeoutMs > 0) ? config.WarningTimeoutMs : 180000;
-            _errorTimeoutMs = (config.ErrorTimeoutMs > 0) ? config.ErrorTimeoutMs : 300000;
+            _errorTimeoutMs = (config.ErrorTimeoutMs > 0) ? config.ErrorTimeoutMs : 300000;            
 
             // device communications
             _comms = client;
@@ -62,7 +71,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
 
             _comms.ResponseReceived += _comms_ResponseReceived;
 
-            DeviceManager.AddDevice(_comms);
+            DeviceManager.AddDevice(_comms);            
 
             //OnlineFeedback = new BoolFeedback(() => true);	// false > _commsMonitor.IsOnline
             //StatusFeedback = new IntFeedback(() => 2);		// 0 > (int)_commsMonitor.Status
@@ -70,7 +79,9 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
             Debug.Console(0, "{0}", new String('-', 100));
         }
 
+        #region Overrides of EssentialsBridgeableDevice
         /// <summary>
+        /// Links plugin device to the EISC bridge Post Activation
         /// Link to API method replaces bridge class, this method will be called by the bridge directly
         /// When using EiscApiAdvanced your JSON type must be "type": "eiscApiAdvanced";
         /// </summary>
@@ -106,7 +117,13 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                 Debug.Console(0, this, "Linking to Bridge Type {0}", GetType().Name);
 
                 // device name to bridge
-                trilist.SetString(joinMap.Name.JoinNumber, Name);
+                trilist.SetString(joinMap.Name.JoinNumber, Name);                                
+                trilist.SetSigTrueAction(joinMap.Poll.JoinNumber, SetManualPoll);
+                trilist.SetString(joinMap.ApiKey.JoinNumber, objSpecialApiKeyHandling.ApiKey);
+                trilist.SetStringSigAction(joinMap.ManualCommand.JoinNumber, SetManualCommand);
+                trilist.SetSigTrueAction(joinMap.HeaderUsesApiKey.JoinNumber, SetHeaderUsesApiKey);
+                trilist.SetSigTrueAction(joinMap.QueryListOperations.JoinNumber, SetQueryListOperations);
+                trilist.SetString(joinMap.ApiKeyUsername.JoinNumber, objSpecialApiKeyHandling.ApiKeyUsername);
 
                 // device online status to bridge
                 //OnlineFeedback.LinkInputSig(trilist.BooleanInput[joinMap.IsOnline.JoinNumber]);
@@ -129,6 +146,13 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                 if (e.InnerException != null) Debug.Console(0, this, "LinkToApi Inner Exception: {0}", e.InnerException);
             }
         }
+        #endregion 
+        
+        private void SetHeaderUsesApiKey()
+        {
+            objSpecialApiKeyHandling.HeaderUsesApiKey = true;
+            
+        }
 
         /// <summary>
         /// Tracks name debugging state
@@ -149,15 +173,20 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         {
             try
             {
-                Debug.Console(1, this, "Respone Code: {0}", args.Code);
+                Debug.Console(1, this, "Respone Code: {0}", args.Code); 
+                //If we get response.code 200 then parse
+                //If we get x then do x
+                //Perahps some will help you know if your AUTH failed or if other things fail! Make it helpful
+                //401 is unahtorizied and 403 is forboredden
+                
+                if (string.IsNullOrEmpty(args.ContentString)) return;                
 
-                if (string.IsNullOrEmpty(args.ContentString)) return;
+                //We know we will always get JSON in reponse
 
 
                 var obj = JsonConvert.DeserializeObject<EnlightedLightingResponseObject>(args.ContentString);
-                if (obj != null) { }
-                    //ParseSessionData(obj);
-                //what data sets do you need to pull out of the response  - So far JKD pulled out CODE and STRING. If you need more, do more.
+                if (obj != null)
+                    ParseResponse(obj);               
             }
             catch (Exception e)
             {
@@ -169,15 +198,17 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
             }
         }
 
-        private void ParseResponse(EnlightedLightingResponseObject obj)
+        /// <summary>
+        /// Determine data sets to pull out of response (CODE and STRING are done for you)
+        /// </summary>
+        /// <param name="obj">Reponse from device</param>
+        private void ParseResponse(EnlightedLightingResponseObject responseObj)
         {
-            if (obj == null) return;
+            if (responseObj == null) return;
 
             try
             {
-
-                //Debug.Console(1, this, "ParseResponse: code-{0}, messgae-{1} | dataCount-{2}", obj.);
-
+                Debug.Console(1, this, Debug.ErrorLogLevel.None, "Reponse from HTTPS:  {0}", responseObj);
             }
             catch (Exception e)
             {
@@ -200,15 +231,29 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
             if (_comms != null) _comms.SendRequest(cmd, string.Empty);
         }
 
-        /// <summary>
-        /// Poll 
-        /// Response message includes number of active sessions
-        /// </summary>
-        public void Poll()
+
+        public void SetManualCommand(string cmd)
         {
-            //SendText(BreakawayIsEnabled
-                //? string.Format("api/v1/GET/bsessions")
-                //: string.Format("api/v1/GET/sessions"));
+            if (string.IsNullOrEmpty(cmd))
+                return;
+
+            if (_comms != null) _comms.SendRequest(cmd, string.Empty);
+        }
+
+        /// <summary>
+        /// Trigger SendText method to Manually poll device version
+        /// </summary>
+        public void SetManualPoll()
+        {
+            SendText(string.Format("version"));                
+        }
+
+        /// <summary>    
+        /// List all operations in JSON format
+        /// </summary>
+        public void SetQueryListOperations()
+        {
+            SendText(string.Format("operations"));
         }
     }
 }

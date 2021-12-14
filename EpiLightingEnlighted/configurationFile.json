@@ -33,7 +33,7 @@
                     "control": {
                         "method": "https",
                         "tcpSshProperties": {
-                            "address": "192.168.1.17",
+                            "address": "foaas.com",
                             "port": 443
                         }
                     },
@@ -41,6 +41,7 @@
                     "warningTimeoutMs": 120000,
                     "errorTimeoutMs": 180000,
                     "apiKey": "",
+                    "apiKeyUsername": "",
                     "presets": {
                         "preset1": {
                             "name": "Bright",

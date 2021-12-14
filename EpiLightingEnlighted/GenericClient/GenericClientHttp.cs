@@ -8,7 +8,7 @@ using PepperDash.Essentials.Core;
 namespace PepperDash.Essentials.Plugin.EnlightedLighting
 {
     /// <summary>
-    /// Evertz Nucleus Client Class
+    /// HTTP Client Class
     /// </summary>
     public class GenericClientHttp : IRestfulComms
     {

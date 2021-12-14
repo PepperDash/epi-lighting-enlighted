@@ -10,7 +10,7 @@ using RequestType = Crestron.SimplSharp.Net.Https.RequestType;
 namespace PepperDash.Essentials.Plugin.EnlightedLighting
 {
     /// <summary>
-    /// Evertz Nucleus Client Class
+    /// HTTPS Client Class
     /// </summary>
     public class GenericClientHttps : IRestfulComms
     {
@@ -18,6 +18,8 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         private readonly HttpsClient _client;
 
         private readonly CrestronQueue<Action> _requestQueue = new CrestronQueue<Action>(20);
+
+        SpecialApiKeyHandling objSpecialApiKeyHandling = new SpecialApiKeyHandling();
 
         /// <summary>
         /// Constructor
@@ -83,9 +85,16 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         public string Password { get; private set; }
 
         /// <summary>
+        /// Determine if header uses ApiKey
+        /// </summary>
+        public bool HeaderUsesApiKey { get; set; }
+
+        /// <summary>
         /// Base64 authorization
         /// </summary>
         public string AuthorizationBase64 { get; set; }
+
+        public string AuthorizationApiKeyTS { get; set; }
 
         #region IRestfulComms Members
 
@@ -111,9 +120,23 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
 
             request.Header.SetHeaderValue("Content-Type", "application/json");
 
-            if (!string.IsNullOrEmpty(AuthorizationBase64))
+            if (objSpecialApiKeyHandling.HeaderUsesApiKey == true)
+            {
+                //Get property of class that has the ApiKey from config
+                //Get property of class that has the Api Username from config
+                //Get Millisecond timespamp
+
+                //NOTE: The colon after each header value will get entered automaticatlly by the 'SetHeaderValue' function
+                //Calculate authorization code                
+                //request.Header.SetHeaderValue("Authorization", )
+                //request.Header.SetHeaderValue("ApiKey", ) //CASE SENSITIVE
+                //request.Header.SetHeaderValue("ts", )
+            }
+
+            else if (!string.IsNullOrEmpty(AuthorizationBase64))
             {
                 request.Header.SetHeaderValue("Authorization", AuthorizationBase64);
+                //request.Header.SetHeaderValue("Authorization:", )
             }
 
             Debug.Console(2, "{0}", new String('-', 100));

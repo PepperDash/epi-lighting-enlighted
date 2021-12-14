@@ -28,8 +28,50 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
             },
             new JoinMetadata()
             {
-                Description = "Enlighted Lighting Online",
+                Description = "Device Online",
                 JoinCapabilities = eJoinCapabilities.ToSIMPL,
+                JoinType = eJoinType.Digital
+            });
+
+        [JoinName("HeaderUsesApiKey")]
+        public JoinDataComplete HeaderUsesApiKey = new JoinDataComplete(
+            new JoinData()
+            {
+                JoinNumber = 10,
+                JoinSpan = 1
+            },
+            new JoinMetadata()
+            {
+                Description = "Utilize API Key within HTTPS Requests",
+                JoinCapabilities = eJoinCapabilities.FromSIMPL,
+                JoinType = eJoinType.Digital
+            });
+
+        [JoinName("Poll")]
+        public JoinDataComplete Poll = new JoinDataComplete(
+            new JoinData()
+            {
+                JoinNumber = 11,
+                JoinSpan = 1
+            },
+            new JoinMetadata()
+            {
+                Description = "Manual Poll Device",
+                JoinCapabilities = eJoinCapabilities.FromSIMPL,
+                JoinType = eJoinType.Digital
+            });
+
+        [JoinName("QueryListOperations")]
+        public JoinDataComplete QueryListOperations = new JoinDataComplete(
+            new JoinData()
+            {
+                JoinNumber = 12,
+                JoinSpan = 1
+            },
+            new JoinMetadata()
+            {
+                Description = "Query Operations List",
+                JoinCapabilities = eJoinCapabilities.FromSIMPL,
                 JoinType = eJoinType.Digital
             });
 
@@ -70,7 +112,49 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
             },
             new JoinMetadata()
             {
-                Description = "Enlighted Lighting Name",
+                Description = "Enlighted Lighting Device Name",
+                JoinCapabilities = eJoinCapabilities.ToSIMPL,
+                JoinType = eJoinType.Serial
+            });
+
+        [JoinName("ApiKeyUsername")]
+        public JoinDataComplete ApiKeyUsername = new JoinDataComplete(
+            new JoinData()
+            {
+                JoinNumber = 2,
+                JoinSpan = 1
+            },
+            new JoinMetadata()
+            {
+                Description = "Username associated to API Key",
+                JoinCapabilities = eJoinCapabilities.ToSIMPL,
+                JoinType = eJoinType.Serial
+            });
+
+        [JoinName("ManualCommand")]
+        public JoinDataComplete ManualCommand = new JoinDataComplete(
+            new JoinData()
+            {
+                JoinNumber = 2,
+                JoinSpan = 1
+            },
+            new JoinMetadata()
+            {
+                Description = "Send command manually (do not include header or delimeter)",
+                JoinCapabilities = eJoinCapabilities.FromSIMPL,
+                JoinType = eJoinType.Serial
+            });
+
+        [JoinName("APIKey")]
+        public JoinDataComplete ApiKey = new JoinDataComplete(
+            new JoinData()
+            {
+                JoinNumber = 3,
+                JoinSpan = 1
+            },
+            new JoinMetadata()
+            {
+                Description = "API Key associated to Username",
                 JoinCapabilities = eJoinCapabilities.ToSIMPL,
                 JoinType = eJoinType.Serial
             });
