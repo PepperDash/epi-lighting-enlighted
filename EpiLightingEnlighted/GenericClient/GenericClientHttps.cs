@@ -19,7 +19,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
 
         private readonly CrestronQueue<Action> _requestQueue = new CrestronQueue<Action>(20);
 
-        SpecialApiKeyHandling objSpecialApiKeyHandling = new SpecialApiKeyHandling();
+        readonly SpecialApiKeyHandling _objSpecialApiKeyHandling = new SpecialApiKeyHandling();
 
         /// <summary>
         /// Constructor
@@ -94,7 +94,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         /// </summary>
         public string AuthorizationBase64 { get; set; }
 
-        public string AuthorizationApiKeyTS { get; set; }
+        public string AuthorizationApiKeyTs { get; set; }
 
         #region IRestfulComms Members
 
@@ -120,7 +120,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
 
             request.Header.SetHeaderValue("Content-Type", "application/json");
 
-            if (objSpecialApiKeyHandling.HeaderUsesApiKey == true)
+            if (_objSpecialApiKeyHandling.HeaderUsesApiKey)
             {
                 //Get property of class that has the ApiKey from config
                 //Get property of class that has the Api Username from config

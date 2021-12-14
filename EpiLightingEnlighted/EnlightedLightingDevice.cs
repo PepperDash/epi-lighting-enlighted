@@ -37,47 +37,58 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         private readonly long _pollTimeMs;
         private readonly long _warningTimeoutMs;
         private readonly long _errorTimeoutMs;
+        readonly SpecialApiKeyHandling _objSpecialApiKeyHandling = new SpecialApiKeyHandling();
 
         public BoolFeedback OnlineFeedback { get; private set; }
         public IntFeedback StatusFeedback { get; private set; }
 
-        SpecialApiKeyHandling objSpecialApiKeyHandling = new SpecialApiKeyHandling();
+        /// <summary>
+        /// Tracks name debugging state
+        /// </summary>
+        public bool ExtendedDebuggingState;
 
-		/// <summary>
-		/// Plugin device constructor for devices that need IBasicCommunication
-		/// </summary>
-		/// <param name="key"></param>
-		/// <param name="name"></param>
-		/// <param name="config"></param>
-		/// <param name="comms"></param>
-        public EnlightedLightingDevice(string key, string name, EnlightedLightingConfig config, IRestfulComms client)
-			: base(key, name)
-		{
-            Debug.Console(0, this, "Constructing new Enlighted Lighting plugin instance using key: '{0}', name: '{1}'", key, name);
+	    #region Device Constructor
 
-			// TODO [X] Update the constructor as needed for the plugin device being developed
-			_config = config;
-            _pollTimeMs = (config.PollTimeMs > 0) ? config.PollTimeMs : 60000;
-            _warningTimeoutMs = (config.WarningTimeoutMs > 0) ? config.WarningTimeoutMs : 180000;
-            _errorTimeoutMs = (config.ErrorTimeoutMs > 0) ? config.ErrorTimeoutMs : 300000;            
+	    /// <summary>
+	    /// Plugin device constructor for devices that need IBasicCommunication
+	    /// </summary>
+	    /// <param name="key"></param>
+	    /// <param name="name"></param>
+	    /// <param name="config"></param>
+	    /// <param name="client"></param>
+	    public EnlightedLightingDevice(string key, string name, EnlightedLightingConfig config, IRestfulComms client)
+	        : base(key, name)
+	    {
+	        Debug.Console(0, this, "Constructing new Enlighted Lighting plugin instance using key: '{0}', name: '{1}'", key,
+	            name);
 
-            // device communications
-            _comms = client;
-            if (_comms == null)
-            {
-                Debug.Console(0, this, Debug.ErrorLogLevel.Error, "Failed to construct GenericClient using method '{0}'", config.Control.Method);
-                return;
-            }
+	        // TODO [X] Update the constructor as needed for the plugin device being developed
+	        _config = config;
+	        _pollTimeMs = (config.PollTimeMs > 0) ? config.PollTimeMs : 60000;
+	        _warningTimeoutMs = (config.WarningTimeoutMs > 0) ? config.WarningTimeoutMs : 180000;
+	        _errorTimeoutMs = (config.ErrorTimeoutMs > 0) ? config.ErrorTimeoutMs : 300000;
 
-            _comms.ResponseReceived += _comms_ResponseReceived;
+	        // device communications
+	        _comms = client;
+	        if (_comms == null)
+	        {
+	            Debug.Console(0, this, Debug.ErrorLogLevel.Error, "Failed to construct GenericClient using method '{0}'",
+	                config.Control.Method);
+	            return;
+	        }
 
-            DeviceManager.AddDevice(_comms);            
+	        _comms.ResponseReceived += _comms_ResponseReceived;
 
-            //OnlineFeedback = new BoolFeedback(() => true);	// false > _commsMonitor.IsOnline
-            //StatusFeedback = new IntFeedback(() => 2);		// 0 > (int)_commsMonitor.Status
+	        DeviceManager.AddDevice(_comms);
 
-            Debug.Console(0, "{0}", new String('-', 100));
-        }
+	        //OnlineFeedback = new BoolFeedback(() => true);	// false > _commsMonitor.IsOnline
+	        //StatusFeedback = new IntFeedback(() => 2);		// 0 > (int)_commsMonitor.Status
+
+	        Debug.Console(0, "{0}", new String('-', 100));
+	    }
+
+	    #endregion
+
 
         #region Overrides of EssentialsBridgeableDevice
         /// <summary>
@@ -119,11 +130,11 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                 // device name to bridge
                 trilist.SetString(joinMap.Name.JoinNumber, Name);                                
                 trilist.SetSigTrueAction(joinMap.Poll.JoinNumber, SetManualPoll);
-                trilist.SetString(joinMap.ApiKey.JoinNumber, objSpecialApiKeyHandling.ApiKey);
+                trilist.SetString(joinMap.ApiKey.JoinNumber, _objSpecialApiKeyHandling.ApiKey);
                 trilist.SetStringSigAction(joinMap.ManualCommand.JoinNumber, SetManualCommand);
                 trilist.SetSigTrueAction(joinMap.HeaderUsesApiKey.JoinNumber, SetHeaderUsesApiKey);
                 trilist.SetSigTrueAction(joinMap.QueryListOperations.JoinNumber, SetQueryListOperations);
-                trilist.SetString(joinMap.ApiKeyUsername.JoinNumber, objSpecialApiKeyHandling.ApiKeyUsername);
+                trilist.SetString(joinMap.ApiKeyUsername.JoinNumber, _objSpecialApiKeyHandling.ApiKeyUsername);
 
                 // device online status to bridge
                 //OnlineFeedback.LinkInputSig(trilist.BooleanInput[joinMap.IsOnline.JoinNumber]);
@@ -131,7 +142,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
 
                 // bridge online status 
                 // during testing this will never go high
-                // TODO [ ]  evaluate switcher in field to see if there is a poll that can be used to signal OnlineStatus back to SIMPL
+                // TODO [X]  evaluate device in field to see if there is a poll that can be used to signal OnlineStatus back to SIMPL
                 trilist.OnlineStatusChange += (device, args) =>
                 {
                     if (!args.DeviceOnLine) return;
@@ -148,16 +159,12 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         }
         #endregion 
         
-        private void SetHeaderUsesApiKey()
-        {
-            objSpecialApiKeyHandling.HeaderUsesApiKey = true;
-            
-        }
-
         /// <summary>
-        /// Tracks name debugging state
+        /// Set HeaderUsesApiKey based on Trilist JoinMap value
         /// </summary>
-        public bool ExtendedDebuggingState;
+        private void SetHeaderUsesApiKey() { _objSpecialApiKeyHandling.HeaderUsesApiKey = true; }
+
+ 
 
         /// <summary>
         /// Sets name debugging state
