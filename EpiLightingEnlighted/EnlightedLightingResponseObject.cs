@@ -18,12 +18,9 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         public string Name { get; set; }
     }
 
-    public class EnlightedLightingResponseObject
+    public class EnlightedLightingResponseStatus
     {
-        //[JsonProperty("meta")]
-        //public MetaConfig Meta { get; set; }
-
-        //[JsonProperty("data", NullValueHandling = NullValueHandling.Ignore)]
-        //public List<DataConfig> Data { get; set; }
+        [JsonProperty("status")]
+        public string Status { get; set; }        
     }
 }

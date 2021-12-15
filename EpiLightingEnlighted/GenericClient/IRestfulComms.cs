@@ -8,6 +8,8 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
     /// </summary>
     public interface IRestfulComms : IKeyed
     {
+        AuthorizationApiKeyData AuthorizationApiKeyData { get; set; }
+
         /// <summary>
         /// Send a request to the given path. Host parameters are configured when the client is created
         /// </summary>

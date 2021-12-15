@@ -40,8 +40,8 @@
                     "pollTimeMs": 60000,
                     "warningTimeoutMs": 120000,
                     "errorTimeoutMs": 180000,
-                    "apiKey": "",
-                    "apiKeyUsername": "",
+                    "apiKey": "74deac09af03dab85468b91ab7c12273cfc37dfc",
+                    "apiKeyUsername": "Crestron",
                     "presets": {
                         "preset1": {
                             "name": "Bright",

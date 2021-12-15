@@ -1,11 +1,16 @@
 ﻿using System;
+using System.Globalization;
 using System.Net;
+using System.Text;
 using Crestron.SimplSharp;
 using Crestron.SimplSharp.Net.Http;
 using Crestron.SimplSharp.Net.Https;
 using PepperDash.Core;
+using PepperDash.Core.WebApi.Presets;
 using PepperDash.Essentials.Core;
 using RequestType = Crestron.SimplSharp.Net.Https.RequestType;
+using Crestron.SimplSharp.Cryptography;
+using SHA1 = System.Security.Cryptography.SHA1;
 
 namespace PepperDash.Essentials.Plugin.EnlightedLighting
 {
@@ -15,11 +20,9 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
     public class GenericClientHttps : IRestfulComms
     {
         private const string DefaultRequestType = "GET";
-        private readonly HttpsClient _client;
+        private readonly HttpsClient _client;               
 
-        private readonly CrestronQueue<Action> _requestQueue = new CrestronQueue<Action>(20);
-
-        readonly SpecialApiKeyHandling _objSpecialApiKeyHandling = new SpecialApiKeyHandling();
+        private readonly CrestronQueue<Action> _requestQueue = new CrestronQueue<Action>(20);        
 
         /// <summary>
         /// Constructor
@@ -47,7 +50,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
             Debug.Console(2, this, "GenericClient: Port = {0}", Port);
             Debug.Console(2, this, "GenericClient: Username = {0}", Username);
             Debug.Console(2, this, "GenericClient: Password = {0}", Password);
-            Debug.Console(2, this, "GenericClient: AuthorizationBase64 = {0}", AuthorizationBase64);
+            Debug.Console(2, this, "GenericClient: AuthorizationBase64 = {0}", AuthorizationBase64);     
 
             _client = new HttpsClient
             {
@@ -85,16 +88,11 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         public string Password { get; private set; }
 
         /// <summary>
-        /// Determine if header uses ApiKey
-        /// </summary>
-        public bool HeaderUsesApiKey { get; set; }
-
-        /// <summary>
         /// Base64 authorization
         /// </summary>
         public string AuthorizationBase64 { get; set; }
 
-        public string AuthorizationApiKeyTs { get; set; }
+        public AuthorizationApiKeyData AuthorizationApiKeyData { get; set; }
 
         #region IRestfulComms Members
 
@@ -120,17 +118,22 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
 
             request.Header.SetHeaderValue("Content-Type", "application/json");
 
-            if (_objSpecialApiKeyHandling.HeaderUsesApiKey)
+            if (AuthorizationApiKeyData.HeaderUsesApiKey)
             {
                 //Get property of class that has the ApiKey from config
                 //Get property of class that has the Api Username from config
-                //Get Millisecond timespamp
 
-                //NOTE: The colon after each header value will get entered automaticatlly by the 'SetHeaderValue' function
-                //Calculate authorization code                
-                //request.Header.SetHeaderValue("Authorization", )
-                //request.Header.SetHeaderValue("ApiKey", ) //CASE SENSITIVE
-                //request.Header.SetHeaderValue("ts", )
+                //Get Millisecond TimeStamp from EPOCH time [https://www.epochconverter.com/]
+                var unixTimeStampMs = (Int32)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
+                Debug.Console(1, this, "_client UnixTimeStamp: {0}", unixTimeStampMs.ToString());
+                //Calculate authorization code
+                var hash = GetApiKey(AuthorizationApiKeyData.ApiKey, AuthorizationApiKeyData.ApiKeyUsername, unixTimeStampMs.ToString());
+                Debug.Console(1, this, "_client ApiKey Hash: {0}", hash);
+                //NOTE: Do not include colon character after each header value, as character will be entered via the 'SetHeaderValue' function 
+                //NOTE: Header values are case sensitive
+                request.Header.SetHeaderValue("ApiKey", AuthorizationApiKeyData.ApiKey);
+                request.Header.SetHeaderValue("Authorization", hash);
+                request.Header.SetHeaderValue("ts", unixTimeStampMs.ToString());
             }
 
             else if (!string.IsNullOrEmpty(AuthorizationBase64))
@@ -154,12 +157,12 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                     _requestQueue.Enqueue(() => _client.DispatchAsync(request, (response, error) =>
                     {
                         if (response == null)
-                        {
+                        {                            
                             Debug.Console(1, this, "_client.Display: response is null, error: {0}", error);
                             return;
-                        }
+                        }                        
 
-                        OnResponseRecieved(new GenericClientResponseEventArgs(response.Code, response.ContentString));
+                        OnResponseRecieved(new GenericClientResponseEventArgs(response.Code, response.ContentString, response.ResponseUrl));
                     }));
                 }
                 else
@@ -172,7 +175,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                             return;
                         }
 
-                        OnResponseRecieved(new GenericClientResponseEventArgs(response.Code, response.ContentString));
+                        OnResponseRecieved(new GenericClientResponseEventArgs(response.Code, response.ContentString, response.ResponseUrl));
                     });
                 }
             }
@@ -261,6 +264,25 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                 Debug.Console(2, this, Debug.ErrorLogLevel.Error, "EncodeBase64 Exception:\r{0}", ex);
                 return "";
             }
+        }
+
+        /// <summary>
+        /// Calculate ApiKey and return ApiKey hash string
+        /// </summary>
+        /// <param name="apiKey">String of ApiKey associated to Username</param>
+        /// <param name="username">String  Username of associated ApiKey</param>
+        /// <param name="timeStampMs">String of EPOCH time in MiliSeconds</param>
+        /// <returns></returns>
+        private static string GetApiKey(string apiKey, string username, string timeStampMs)
+        {
+            //Create object used for calculating SHA1 
+            var hashCalculator = new SHA1CryptoServiceProvider();
+            //Create string that combines all three substrings
+            var sha1StringCombined = username + apiKey + timeStampMs;
+            //Calculate the hash with encoding into Bytes
+            var hashbytes = hashCalculator.ComputeHash(Encoding.UTF8.GetBytes(sha1StringCombined));            
+            //Convert Bytes to a string
+            return BitConverter.ToString(hashbytes);
         }
     }
 }

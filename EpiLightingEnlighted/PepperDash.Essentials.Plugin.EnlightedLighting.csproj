@@ -71,6 +71,10 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\PepperDashEssentials\lib\net35\PepperDash_Essentials_DM.dll</HintPath>
     </Reference>
+    <Reference Include="SimplSharpCryptographyInterface, Version=1.0.6197.21123, Culture=neutral, PublicKeyToken=1099c178b3b54c3b, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\ProgramData\Crestron\SDK\SimplSharpCryptographyInterface.dll</HintPath>
+    </Reference>
     <Reference Include="SimplSharpCustomAttributesInterface, Version=1.0.0.0, Culture=neutral, PublicKeyToken=1099c178b3b54c3b, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\..\..\..\..\ProgramData\Crestron\SDK\SimplSharpCustomAttributesInterface.dll</HintPath>
@@ -103,6 +107,7 @@
     <Compile Include="EnlightedLightingConfig.cs" />
     <Compile Include="EnlightedLightingFactory.cs" />
     <Compile Include="EnlightedLightingResponseObject.cs" />
+    <Compile Include="GenericClient\AuthorizationApiKeyData.cs" />
     <Compile Include="GenericClient\GenericClientEventArgs.cs" />
     <Compile Include="GenericClient\GenericClientHttp.cs" />
     <Compile Include="GenericClient\GenericClientHttps.cs" />

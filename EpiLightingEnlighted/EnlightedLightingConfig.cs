@@ -98,6 +98,12 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         [JsonProperty("apiKey")]
         public string ApiKey { get; set; }
 
+        [JsonProperty("headerUsesApiKey")]
+        public bool HeaderUsesApiKey { get; set; }
+
+        [JsonProperty("apiKeyUsername")]
+        public string ApiKeyUsername { get; set; }
+
 		/// <summary>
 		/// Example dictionary of objects
 		/// </summary>

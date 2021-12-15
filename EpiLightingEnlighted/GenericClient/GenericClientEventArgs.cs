@@ -17,6 +17,11 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         /// Client response content string
         /// </summary>
         public string ContentString { get; set; }
+        
+        /// <summary>
+        /// Client URL Response (path of the request)
+        /// </summary>
+        public string ResponseUrl { get; set; }
 
         /// <summary>
         /// Constructor
@@ -31,10 +36,12 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         /// </summary>
         /// <param name="code"></param>
         /// <param name="contentString"></param>
-        public GenericClientResponseEventArgs(int code, string contentString)
+        /// /// <param name="responseUrl"></param>
+        public GenericClientResponseEventArgs(int code, string contentString, string responseUrl)
         {
             Code = code < 0 ? 0 : code;
             ContentString = string.IsNullOrEmpty(contentString) ? "" : contentString;
+            ResponseUrl = responseUrl;
         }
     }
 }

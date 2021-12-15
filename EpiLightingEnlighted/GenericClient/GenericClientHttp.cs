@@ -90,6 +90,8 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         /// </summary>
         public string AuthorizationBase64 { get; set; }
 
+        public AuthorizationApiKeyData AuthorizationApiKeyData { get; set; }
+
         #region IRestfulComms Members
 
         /// <summary>
@@ -139,8 +141,8 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                             return;
                         }
 
-                        
-                        OnResponseRecieved(new GenericClientResponseEventArgs(response.Code, response.ContentString));
+
+                        OnResponseRecieved(new GenericClientResponseEventArgs(response.Code, response.ContentString, response.ResponseUrl));
                     }));
                 }
                 else
@@ -153,7 +155,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                             return;
                         }
 
-                        OnResponseRecieved(new GenericClientResponseEventArgs(response.Code, response.ContentString));
+                        OnResponseRecieved(new GenericClientResponseEventArgs(response.Code, response.ContentString, response.ResponseUrl));
                     });
                 }
             }

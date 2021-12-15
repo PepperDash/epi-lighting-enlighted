@@ -15,9 +15,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
 	public class EnlightedLightingBridgeJoinMap : JoinMapBaseAdvanced
 	{
 
-		#region Digital
-
-		// TODO [X] Add digital joins below plugin being developed	
+		#region Digital	
 
         [JoinName("IsOnline")]
         public JoinDataComplete IsOnline = new JoinDataComplete(
@@ -30,20 +28,6 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
             {
                 Description = "Device Online",
                 JoinCapabilities = eJoinCapabilities.ToSIMPL,
-                JoinType = eJoinType.Digital
-            });
-
-        [JoinName("HeaderUsesApiKey")]
-        public JoinDataComplete HeaderUsesApiKey = new JoinDataComplete(
-            new JoinData()
-            {
-                JoinNumber = 10,
-                JoinSpan = 1
-            },
-            new JoinMetadata()
-            {
-                Description = "Utilize API Key within HTTPS Requests",
-                JoinCapabilities = eJoinCapabilities.FromSIMPL,
                 JoinType = eJoinType.Digital
             });
 
@@ -78,30 +62,26 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
 		#endregion
 
 
-		#region Analog
+		#region Analog		
 
-		// TODO [X] Add analog joins below plugin being developed
-
-        [JoinName("Status")]
-        public JoinDataComplete Status = new JoinDataComplete(
-            new JoinData()
-            {
-                JoinNumber = 1,
-                JoinSpan = 1
-            },
-            new JoinMetadata()
-            {
-                Description = "Enlighted Lighting Status",
-                JoinCapabilities = eJoinCapabilities.ToSIMPL,
-                JoinType = eJoinType.Analog
-            });
+        //[JoinName("Status")]
+        //public JoinDataComplete Status = new JoinDataComplete(
+        //    new JoinData()
+        //    {
+        //        JoinNumber = 1,
+        //        JoinSpan = 1
+        //    },
+        //    new JoinMetadata()
+        //    {
+        //        Description = "Enlighted Lighting Status",
+        //        JoinCapabilities = eJoinCapabilities.ToSIMPL,
+        //        JoinType = eJoinType.Analog
+        //    });
 
 		#endregion
 
 
-		#region Serial
-
-		// TODO [X] Add serial joins below plugin being developed
+		#region Serial		
 
         [JoinName("Name")]
         public JoinDataComplete Name = new JoinDataComplete(
@@ -117,20 +97,6 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                 JoinType = eJoinType.Serial
             });
 
-        [JoinName("ApiKeyUsername")]
-        public JoinDataComplete ApiKeyUsername = new JoinDataComplete(
-            new JoinData()
-            {
-                JoinNumber = 2,
-                JoinSpan = 1
-            },
-            new JoinMetadata()
-            {
-                Description = "Username associated to API Key",
-                JoinCapabilities = eJoinCapabilities.ToSIMPL,
-                JoinType = eJoinType.Serial
-            });
-
         [JoinName("ManualCommand")]
         public JoinDataComplete ManualCommand = new JoinDataComplete(
             new JoinData()
@@ -140,13 +106,13 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
             },
             new JoinMetadata()
             {
-                Description = "Send command manually (do not include header or delimeter)",
+                Description = "Send command path manually (do not include header or delimeter)",
                 JoinCapabilities = eJoinCapabilities.FromSIMPL,
                 JoinType = eJoinType.Serial
             });
 
-        [JoinName("APIKey")]
-        public JoinDataComplete ApiKey = new JoinDataComplete(
+        [JoinName("ApplyScene")]
+        public JoinDataComplete ApplyScene = new JoinDataComplete(
             new JoinData()
             {
                 JoinNumber = 3,
@@ -154,8 +120,8 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
             },
             new JoinMetadata()
             {
-                Description = "API Key associated to Username",
-                JoinCapabilities = eJoinCapabilities.ToSIMPL,
+                Description = "Send command path manually (do not include header or delimeter)",
+                JoinCapabilities = eJoinCapabilities.FromSIMPL,
                 JoinType = eJoinType.Serial
             });
 

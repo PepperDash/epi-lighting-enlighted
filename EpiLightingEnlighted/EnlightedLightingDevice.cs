@@ -1,4 +1,5 @@
 ﻿using System;
+using Crestron.SimplSharp.CrestronIO;
 using PepperDash.Core;
 using Newtonsoft.Json;
 using Crestron.SimplSharp;
@@ -6,41 +7,54 @@ using PepperDash.Essentials.Core;
 using System.Collections.Generic;
 using PepperDash.Essentials.Core.Bridges;
 using Crestron.SimplSharpPro.DeviceSupport;
+using PepperDash.Essentials.Devices.Common.VideoCodec.ZoomRoom;
 
 
 namespace PepperDash.Essentials.Plugin.EnlightedLighting
 {
-
-    public class SpecialApiKeyHandling
+    //Make a public class of functions to send paths or requests
+    public class SendLightingApiRequest
     {
-        public bool HeaderUsesApiKey { get; set; }
-        public string ApiKey { get; set; }
-        public string ApiKeyUsername { get; set; }
+        //Would be smart to print out paths being sent to confirm the slashes are needed or not
+        private string pathPrefixService = "/ems/services/org/switch/op/dim/switch";
+        private string pathPrefixApi = "/ems/api/org/switch/v1/op";
+        private readonly IRestfulComms _comms;
+
+        /// <summary>
+        /// Constructor which includes Copy of the Generic HTTP Client
+        /// </summary>
+        /// <param name="comms"></param>
+        public SendLightingApiRequest(IRestfulComms comms)
+        {
+            _comms = comms;
+        }
+
+        public void ApplyScene(string path)
+        {                        
+            //_comms.SendRequest(path, null);
+            //Assume case sensitive with requestType
+            _comms.SendRequest("Post", path, null);
+        }
     }
 
-	/// <summary>
-	/// Plugin device template for third party devices that use IBasicCommunication
-	/// </summary>
-	/// <remarks>
-	/// Rename the class to match the device plugin being developed.
-	/// </remarks>
-	/// <example>
-	/// "EssentialsPluginDeviceTemplate" renamed to "SamsungMdcDevice"
-	/// </example>
+    /// <summary>
+    /// Create the bridgeable device
+    /// </summary>
 	public class EnlightedLightingDevice : EssentialsBridgeableDevice
     {
         /// <summary>
-        /// It is often desirable to store the config
+        /// Store the config locally
         /// </summary>
         private EnlightedLightingConfig _config;
         private readonly IRestfulComms _comms;
         private readonly long _pollTimeMs;
         private readonly long _warningTimeoutMs;
         private readonly long _errorTimeoutMs;
-        readonly SpecialApiKeyHandling _objSpecialApiKeyHandling = new SpecialApiKeyHandling();
+
+        public SendLightingApiRequest SendLightingRequest { get; set; }
 
         public BoolFeedback OnlineFeedback { get; private set; }
-        public IntFeedback StatusFeedback { get; private set; }
+        //public IntFeedback StatusFeedback { get; private set; }
 
         /// <summary>
         /// Tracks name debugging state
@@ -61,12 +75,11 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
 	    {
 	        Debug.Console(0, this, "Constructing new Enlighted Lighting plugin instance using key: '{0}', name: '{1}'", key,
 	            name);
-
-	        // TODO [X] Update the constructor as needed for the plugin device being developed
+	        
 	        _config = config;
 	        _pollTimeMs = (config.PollTimeMs > 0) ? config.PollTimeMs : 60000;
 	        _warningTimeoutMs = (config.WarningTimeoutMs > 0) ? config.WarningTimeoutMs : 180000;
-	        _errorTimeoutMs = (config.ErrorTimeoutMs > 0) ? config.ErrorTimeoutMs : 300000;
+	        _errorTimeoutMs = (config.ErrorTimeoutMs > 0) ? config.ErrorTimeoutMs : 300000;            
 
 	        // device communications
 	        _comms = client;
@@ -75,7 +88,15 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
 	            Debug.Console(0, this, Debug.ErrorLogLevel.Error, "Failed to construct GenericClient using method '{0}'",
 	                config.Control.Method);
 	            return;
-	        }
+	        }            
+
+            SendLightingRequest = new SendLightingApiRequest(_comms);
+
+            //The waya to get the control properties to the GenericHTTPS client. 
+            //Taking what it's the config values and getting them to the client.
+	        client.AuthorizationApiKeyData.ApiKey = config.ApiKey;
+            client.AuthorizationApiKeyData.ApiKeyUsername = config.ApiKeyUsername;
+            client.AuthorizationApiKeyData.HeaderUsesApiKey = config.HeaderUsesApiKey;
 
 	        _comms.ResponseReceived += _comms_ResponseReceived;
 
@@ -86,7 +107,6 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
 
 	        Debug.Console(0, "{0}", new String('-', 100));
 	    }
-
 	    #endregion
 
 
@@ -130,19 +150,17 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                 // device name to bridge
                 trilist.SetString(joinMap.Name.JoinNumber, Name);                                
                 trilist.SetSigTrueAction(joinMap.Poll.JoinNumber, SetManualPoll);
-                trilist.SetString(joinMap.ApiKey.JoinNumber, _objSpecialApiKeyHandling.ApiKey);
                 trilist.SetStringSigAction(joinMap.ManualCommand.JoinNumber, SetManualCommand);
-                trilist.SetSigTrueAction(joinMap.HeaderUsesApiKey.JoinNumber, SetHeaderUsesApiKey);
+                trilist.SetStringSigAction(joinMap.ApplyScene.JoinNumber, SetApplyScene);
                 trilist.SetSigTrueAction(joinMap.QueryListOperations.JoinNumber, SetQueryListOperations);
-                trilist.SetString(joinMap.ApiKeyUsername.JoinNumber, _objSpecialApiKeyHandling.ApiKeyUsername);
 
                 // device online status to bridge
-                //OnlineFeedback.LinkInputSig(trilist.BooleanInput[joinMap.IsOnline.JoinNumber]);
+                OnlineFeedback.LinkInputSig(trilist.BooleanInput[joinMap.IsOnline.JoinNumber]);
                 //StatusFeedback.LinkInputSig(trilist.UShortInput[joinMap.Status.JoinNumber]);
 
                 // bridge online status 
                 // during testing this will never go high
-                // TODO [X]  evaluate device in field to see if there is a poll that can be used to signal OnlineStatus back to SIMPL
+                
                 trilist.OnlineStatusChange += (device, args) =>
                 {
                     if (!args.DeviceOnLine) return;
@@ -157,14 +175,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                 if (e.InnerException != null) Debug.Console(0, this, "LinkToApi Inner Exception: {0}", e.InnerException);
             }
         }
-        #endregion 
-        
-        /// <summary>
-        /// Set HeaderUsesApiKey based on Trilist JoinMap value
-        /// </summary>
-        private void SetHeaderUsesApiKey() { _objSpecialApiKeyHandling.HeaderUsesApiKey = true; }
-
- 
+        #endregion                 
 
         /// <summary>
         /// Sets name debugging state
@@ -180,7 +191,8 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         {
             try
             {
-                Debug.Console(1, this, "Respone Code: {0}", args.Code); 
+                Debug.Console(1, this, "Respone Code: {0}", args.Code);
+                Debug.Console(0, this, "Response URL: {0}", args.ResponseUrl);
                 //If we get response.code 200 then parse
                 //If we get x then do x
                 //Perahps some will help you know if your AUTH failed or if other things fail! Make it helpful
@@ -189,11 +201,12 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                 if (string.IsNullOrEmpty(args.ContentString)) return;                
 
                 //We know we will always get JSON in reponse
-
-
-                var obj = JsonConvert.DeserializeObject<EnlightedLightingResponseObject>(args.ContentString);
-                if (obj != null)
-                    ParseResponse(obj);               
+                if (args.ResponseUrl.Contains("applyScene"))
+                {                   
+                    var obj = JsonConvert.DeserializeObject<EnlightedLightingResponseStatus>(args.ContentString);
+                    if (obj != null)
+                        ParseStatusResponse(obj);
+                }                               
             }
             catch (Exception e)
             {
@@ -208,13 +221,15 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         /// <summary>
         /// Determine data sets to pull out of response (CODE and STRING are done for you)
         /// </summary>
-        /// <param name="obj">Reponse from device</param>
-        private void ParseResponse(EnlightedLightingResponseObject responseObj)
+        /// <param name="responseObj">Reponse from device</param>
+        private void ParseStatusResponse(EnlightedLightingResponseStatus responseObj)
         {
             if (responseObj == null) return;
+            
 
             try
             {
+                //if(responseObj.Status == 0){}
                 Debug.Console(1, this, Debug.ErrorLogLevel.None, "Reponse from HTTPS:  {0}", responseObj);
             }
             catch (Exception e)
@@ -252,7 +267,8 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         /// </summary>
         public void SetManualPoll()
         {
-            SendText(string.Format("version"));                
+            //SendText(string.Format("version"));                
+            _comms.SendRequest("Get", "/ems/api/org/em/v1/energy", null);
         }
 
         /// <summary>    
@@ -262,5 +278,10 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         {
             SendText(string.Format("operations"));
         }
-    }
+
+        public void SetApplyScene(string path)
+        {
+            _comms.SendRequest("Post", path, null);            
+        }
+    }   
 }
