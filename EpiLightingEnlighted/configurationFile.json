@@ -23,9 +23,9 @@
                 "properties": {}
             },
             {
-                "key": "enlighted-lighting-1",
+                "key": "lighting-1",
                 "uid": 1,
-                "name": "Enlighted Energy Manager 1",
+                "name": "Enlighted Energy Manager (EM)",
                 "type": "enlightedlighting",
                 "group": "plugin",
                 "parentDeviceKey": "processor",
@@ -33,7 +33,7 @@
                     "control": {
                         "method": "https",
                         "tcpSshProperties": {
-                            "address": "foaas.com",
+                            "address": "0.0.0.0",
                             "port": 443
                         }
                     },
@@ -41,29 +41,34 @@
                     "warningTimeoutMs": 120000,
                     "errorTimeoutMs": 180000,
                     "apiKey": "74deac09af03dab85468b91ab7c12273cfc37dfc",
-                    "apiKeyUsername": "Crestron",
+                    "apiKeyUsername": "crestron",
                     "presets": {
+                        "comment": {
+                        "name": "Touch panel name given for each preset",
+                        "path": "REST API applyScene path",
+                        "pathExample": "/ems/api/org/switch/v1/op/applyScene/{switch_id}/{scene_id}?time=60"
+                        },
                         "preset1": {
                             "name": "Bright",
-                            "id": "51"
+                            "path": "/ems/api/org/switch/v1/op/applyScene/11/1?time=0"
                         },
                         "preset2": {
                             "name": "Medium",
-                            "id": "52"
+                            "path": "/ems/api/org/switch/v1/op/applyScene/11/2?time=0"
                         },
                         "preset3": {
                             "name": "Mid-Low",
-                            "id": "53"
+                            "path": "/ems/api/org/switch/v1/op/applyScene/11/3?time=0"
                         },
                         "preset4": {
                             "name": "Low",
-                            "id": "54"
+                            "path": "/ems/api/org/switch/v1/op/applyScene/11/4?time=0"
                         },
                         "preset5": {
                             "name": "Off",
-                            "id": "55"
+                            "path": "/ems/api/org/switch/v1/op/applyScene/11/5?time=0"
                         }
-                    },                  
+                    }                  
                 }
             },
             {
@@ -83,7 +88,7 @@
                     },
                     "devices": [
                         {
-                            "deviceKey": "enlighted-lighting-1",
+                            "deviceKey": "lighting-1",
                             "joinStart": 1
                         }
                     ]

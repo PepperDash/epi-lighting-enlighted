@@ -1,4 +1,4 @@
-# Essentials Plugin Template (c) 2020
+# PepperDash Essentials Enlighted Lighting Plugin (c) 2021
 
 ## License
 
@@ -6,37 +6,72 @@ Provided under MIT license
 
 ## Overview
 
-Fork this repo when creating a new plugin for Essentials. For more information about plugins, refer to the Essentials Wiki [Plugins](https://github.com/PepperDash/Essentials/wiki/Plugins) article.
+This repo contains a plugin for use with [PepperDash Essentials](https://github.com/PepperDash/Essentials). This plugin enables Essentials to communicate with and control Enlighting Lighting Energy Manager (EM) lighting scenes via HTTPS.
 
-This repo contains example classes for the three main categories of devices:
-* `EssentialsPluginTemplateDevice`: Used for most third party devices which require communication over a streaming mechanism such as a Com port, TCP/SSh/UDP socket, CEC, etc
-* `EssentialsPluginTemplateLogicDevice`:  Used for devices that contain logic, but don't require any communication with third parties outside the program
-* `EssentialsPluginTemplateCrestronDevice`:  Used for devices that represent a piece of Crestron hardware
+## Example Config Object
 
-There are matching factory classes for each of the three categories of devices.  The `EssentialsPluginTemplateConfigObject` should be used as a template and modified for any of the categories of device.  Same goes for the `EssentialsPluginTemplateBridgeJoinMap`.
+```json
+{
+      "key": "lighting-1",
+      "uid": 1,
+      "name": "Enlighted Energy Manager (EM)",
+      "type": "enlightedlighting",
+      "group": "plugin",
+      "parentDeviceKey": "processor",
+      "properties": {
+          "control": {
+              "method": "https",
+              "tcpSshProperties": {
+                  "address": "0.0.0.0",
+                  "port": 443
+              }
+          },
+          "pollTimeMs": 60000,
+          "warningTimeoutMs": 120000,
+          "errorTimeoutMs": 180000,
+          "apiKey": "74deac09af03dab85468b91ab7c12273cfc37dfc",
+          "apiKeyUsername": "crestron",
+          "presets": {
+              "comment": {
+              "name": "Touch panel name given for each preset",
+              "path": "REST API applyScene path",
+              "pathExample": "/ems/api/org/switch/v1/op/applyScene/{switch_id}/{scene_id}?time=60"
+              },
+              "preset1": {
+                  "name": "Bright",
+                  "path": "/ems/api/org/switch/v1/op/applyScene/11/1?time=0"
+              },
+              "preset2": {
+                  "name": "Medium",
+                  "path": "/ems/api/org/switch/v1/op/applyScene/11/2?time=0"
+              },
+              "preset3": {
+                  "name": "Mid-Low",
+                  "path": "/ems/api/org/switch/v1/op/applyScene/11/3?time=0"
+              },
+              "preset4": {
+                  "name": "Low",
+                  "path": "/ems/api/org/switch/v1/op/applyScene/11/4?time=0"
+              },
+              "preset5": {
+                  "name": "Off",
+                  "path": "/ems/api/org/switch/v1/op/applyScene/11/5?time=0"
+              }
+          }                  
+      }
+  }
+```
+For more configuration information, see the [PepperDash Essentials wiki](https://github.com/PepperDash/Essentials/wiki).
 
-This also illustrates how a plugin can contain multiple devices.
+## Github Actions
 
-## Cloning Instructions
+This repo contains two Github Action workflows that will build this project automatically. Modify the SOLUTION_PATH and SOLUTION_FILE environment variables as needed. Any branches named `feature/*`, `release/*`, `hotfix/*` or `development` will automatically be built with the action and create a release in the repository with a version number based on the latest release on the master branch. If there are no releases yet, the version number will be 0.0.1. The version number will be modified based on what branch triggered the build:
 
-After forking this repository into your own GitHub space, you can create a new repository using this one as the template.  Then you must install the necessary dependencies as indicated below.
+- `feature` branch builds will be tagged with an `alpha` descriptor, with the Action run appended: `0.0.1-alpha-1`
+- `development` branch builds will be tagged with a `beta` descriptor, with the Action run appended: `0.0.1-beta-2`
+- `release` branches will be tagged with an `rc` descriptor, with the Action run appended: `0.0.1-rc-3`
+- `hotfix` branch builds will be tagged with a `hotfix` descriptor, with the Action run appended: `0.0.1-hotfix-4`
 
-## Dependencies
+Builds on the `Main` branch will ONLY be triggered by manually creating a release using the web interface in the repository. They will be versioned with the tag that is created when the release is created. The tags MUST take the form `major.minor.revision` to be compatible with the build process. A tag like `v0.1.0-alpha` is NOT compatabile and may result in the build process failing.
 
-The [Essentials](https://github.com/PepperDash/Essentials) libraries are required. They referenced via nuget. You must have nuget.exe installed and in the `PATH` environment variable to use the following command. Nuget.exe is available at [nuget.org](https://dist.nuget.org/win-x86-commandline/latest/nuget.exe).
-
-### Installing Dependencies
-
-To install dependencies once nuget.exe is installed, run the following command from the root directory of your repository:
-`nuget install .\packages.config -OutputDirectory .\packages -excludeVersion`.
-To verify that the packages installed correctly, open the plugin solution in your repo and make sure that all references are found, then try and build it.
-
-### Installing Different versions of PepperDash Core
-
-If you need a different version of PepperDash Core, use the command `nuget install .\packages.config -OutputDirectory .\packages -excludeVersion -Version {versionToGet}`. Omitting the `-Version` option will pull the version indicated in the packages.config file.
-
-### Instructions for Renaming Solution and Files
-
-See the Task List in Visual Studio for a guide on how to start using the templage.  There is extensive inline documentation and examples as well.
-
-For renaming instructions in particular, see the XML `remarks` tags on class definitions
+If you have any questions about the action, contact Andrew Welker or Neil Dorin.
