@@ -29,17 +29,16 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         /// </code>
 		/// In the constructor we initialize the list with the typenames that will build an instance of this device
         /// <code>
-		/// TypeNames = new List<string>() { "SamsungMdc", "SamsungMdcDisplay" };
+		/// TypeNames = new List<string>() { "SamsungMdc", "SamsungMdcDisplay" };</string>
         /// </code>
 		/// </example>
         public EnlightedLightingFactory()
         {
             // Set the minimum Essentials Framework Version
-			// TODO [X] Update the Essentials minimum framework version which this plugin has been tested against
 			MinimumEssentialsFrameworkVersion = "1.9.7";
 
             // In the constructor we initialize the list with the typenames that will build an instance of this device
-			// TODO [X] Update the TypeNames for the plugin being developed
+			//Update the TypeNames for the plugin being developed
             TypeNames = new List<string>() { "enlightedlighting" };
         }
 

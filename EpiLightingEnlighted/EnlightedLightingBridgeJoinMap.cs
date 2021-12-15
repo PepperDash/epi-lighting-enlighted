@@ -35,7 +35,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         public JoinDataComplete Poll = new JoinDataComplete(
             new JoinData()
             {
-                JoinNumber = 11,
+                JoinNumber = 1,
                 JoinSpan = 1
             },
             new JoinMetadata()
@@ -45,39 +45,11 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                 JoinType = eJoinType.Digital
             });
 
-        [JoinName("QueryListOperations")]
-        public JoinDataComplete QueryListOperations = new JoinDataComplete(
-            new JoinData()
-            {
-                JoinNumber = 12,
-                JoinSpan = 1
-            },
-            new JoinMetadata()
-            {
-                Description = "Query Operations List",
-                JoinCapabilities = eJoinCapabilities.FromSIMPL,
-                JoinType = eJoinType.Digital
-            });
-
 		#endregion
 
 
 		#region Analog		
-
-        //[JoinName("Status")]
-        //public JoinDataComplete Status = new JoinDataComplete(
-        //    new JoinData()
-        //    {
-        //        JoinNumber = 1,
-        //        JoinSpan = 1
-        //    },
-        //    new JoinMetadata()
-        //    {
-        //        Description = "Enlighted Lighting Status",
-        //        JoinCapabilities = eJoinCapabilities.ToSIMPL,
-        //        JoinType = eJoinType.Analog
-        //    });
-
+      
 		#endregion
 
 
@@ -120,7 +92,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
             },
             new JoinMetadata()
             {
-                Description = "Send command path manually (do not include header or delimeter)",
+                Description = "Serial string paths for ApplyScene (only include path)",
                 JoinCapabilities = eJoinCapabilities.FromSIMPL,
                 JoinType = eJoinType.Serial
             });

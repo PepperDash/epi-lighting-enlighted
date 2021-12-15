@@ -92,6 +92,9 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         /// </summary>
         public string AuthorizationBase64 { get; set; }
 
+        /// <summary>
+        /// Custom Authorization with ApiKeyData
+        /// </summary>
         public AuthorizationApiKeyData AuthorizationApiKeyData { get; set; }
 
         #region IRestfulComms Members
@@ -104,11 +107,14 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         /// <summary>
         /// Sends request to the client
         /// </summary>
-        /// <param name="requestType"></param>
+        /// <param name="requestType">ENUM of HTTP request type. Example: Get, Post, or Put</param>
         /// <param name="path"></param>
         /// <param name="content"></param>
         public void SendRequest(string requestType, string path, string content)
         {
+            if (requestType.Length < 1) { return; }
+            if (path.Length < 1) { return; }
+
             var request = new HttpsClientRequest
             {
                 RequestType = (RequestType)Enum.Parse(typeof(RequestType), requestType, true),
@@ -145,9 +151,10 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
             Debug.Console(2, "{0}", new String('-', 100));
             Debug.Console(2, this, @"Request:
                 url: {0}
-                content: {1}
-                requestType: {2}",
-                request.Url, request.ContentString, request.RequestType);
+                path: {1}
+                content: {2}
+                requestType: {3}",
+                request.Url, path, request.ContentString, request.RequestType);
             Debug.Console(2, "{0}", new String('-', 100));
 
             try

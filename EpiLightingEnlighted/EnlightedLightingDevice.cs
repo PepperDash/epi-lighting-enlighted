@@ -1,29 +1,26 @@
 ﻿using System;
-using Crestron.SimplSharp.CrestronIO;
 using PepperDash.Core;
 using Newtonsoft.Json;
-using Crestron.SimplSharp;
 using PepperDash.Essentials.Core;
-using System.Collections.Generic;
 using PepperDash.Essentials.Core.Bridges;
 using Crestron.SimplSharpPro.DeviceSupport;
-using PepperDash.Essentials.Devices.Common.VideoCodec.ZoomRoom;
-
 
 namespace PepperDash.Essentials.Plugin.EnlightedLighting
 {
+    //Would be smart to print out paths being sent to confirm the slashes are needed or not
+
     //Make a public class of functions to send paths or requests
     public class SendLightingApiRequest
-    {
-        //Would be smart to print out paths being sent to confirm the slashes are needed or not
-        private string pathPrefixService = "/ems/services/org/switch/op/dim/switch";
-        private string pathPrefixApi = "/ems/api/org/switch/v1/op";
+    {        
+        /// <summary>
+        /// Local copy of the IRestfulComms client
+        /// </summary>
         private readonly IRestfulComms _comms;
 
         /// <summary>
-        /// Constructor which includes Copy of the Generic HTTP Client
+        /// Constructor which includes copy of the Generic HTTP Client
         /// </summary>
-        /// <param name="comms"></param>
+        /// <param name="comms">Local copy of the IRestfulComms client</param>
         public SendLightingApiRequest(IRestfulComms comms)
         {
             _comms = comms;
@@ -92,8 +89,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
 
             SendLightingRequest = new SendLightingApiRequest(_comms);
 
-            //The waya to get the control properties to the GenericHTTPS client. 
-            //Taking what it's the config values and getting them to the client.
+            //Taking config values and getting them to the client
 	        client.AuthorizationApiKeyData.ApiKey = config.ApiKey;
             client.AuthorizationApiKeyData.ApiKeyUsername = config.ApiKeyUsername;
             client.AuthorizationApiKeyData.HeaderUsesApiKey = config.HeaderUsesApiKey;
@@ -152,7 +148,6 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                 trilist.SetSigTrueAction(joinMap.Poll.JoinNumber, SetManualPoll);
                 trilist.SetStringSigAction(joinMap.ManualCommand.JoinNumber, SetManualCommand);
                 trilist.SetStringSigAction(joinMap.ApplyScene.JoinNumber, SetApplyScene);
-                trilist.SetSigTrueAction(joinMap.QueryListOperations.JoinNumber, SetQueryListOperations);
 
                 // device online status to bridge
                 OnlineFeedback.LinkInputSig(trilist.BooleanInput[joinMap.IsOnline.JoinNumber]);
@@ -194,19 +189,18 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                 Debug.Console(1, this, "Respone Code: {0}", args.Code);
                 Debug.Console(0, this, "Response URL: {0}", args.ResponseUrl);
                 //If we get response.code 200 then parse
-                //If we get x then do x
-                //Perahps some will help you know if your AUTH failed or if other things fail! Make it helpful
+                //Perahps some will help you know if your AUTH failed or if other things fail! Make it helpful.
                 //401 is unahtorizied and 403 is forboredden
                 
-                if (string.IsNullOrEmpty(args.ContentString)) return;                
+                if (string.IsNullOrEmpty(args.ContentString)) return;
 
-                //We know we will always get JSON in reponse
+                if (args.Code != 200) return;
                 if (args.ResponseUrl.Contains("applyScene"))
                 {                   
                     var obj = JsonConvert.DeserializeObject<EnlightedLightingResponseStatus>(args.ContentString);
                     if (obj != null)
                         ParseStatusResponse(obj);
-                }                               
+                }
             }
             catch (Exception e)
             {
@@ -226,10 +220,14 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         {
             if (responseObj == null) return;
             
-
             try
             {
-                //if(responseObj.Status == 0){}
+                // if(responseObj.Status == 0){} 
+                
+                // There really isn't anything to parse from the device. The EM is not rememebering
+                // the last scene called, only the lighting levels per load which we are not interested in parsing or saving.
+                // Since the response is already being printed into console if/when debug is active we get the status response
+                // and can view the status via the API with no need to print it here.
                 Debug.Console(1, this, Debug.ErrorLogLevel.None, "Reponse from HTTPS:  {0}", responseObj);
             }
             catch (Exception e)
@@ -240,11 +238,10 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
             }
         }
 
-
         /// <summary>
         /// Send text to device
         /// </summary>
-        /// <param name="cmd"></param>
+        /// <param name="cmd">Path to send to device</param>
         public void SendText(string cmd)
         {
             if (string.IsNullOrEmpty(cmd))
@@ -253,7 +250,10 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
             if (_comms != null) _comms.SendRequest(cmd, string.Empty);
         }
 
-
+        /// <summary>
+        /// Sent custom command using GET response type
+        /// </summary>
+        /// <param name="cmd">Path of custom command</param>
         public void SetManualCommand(string cmd)
         {
             if (string.IsNullOrEmpty(cmd))
@@ -267,18 +267,14 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         /// </summary>
         public void SetManualPoll()
         {
-            //SendText(string.Format("version"));                
+            //Custom command used to poll device
             _comms.SendRequest("Get", "/ems/api/org/em/v1/energy", null);
         }
 
-        /// <summary>    
-        /// List all operations in JSON format
+        /// <summary>
+        /// Apply lighting scene, send path as parameter
         /// </summary>
-        public void SetQueryListOperations()
-        {
-            SendText(string.Format("operations"));
-        }
-
+        /// <param name="path">Path of URL, requires forward slash prefix</param>
         public void SetApplyScene(string path)
         {
             _comms.SendRequest("Post", path, null);            
