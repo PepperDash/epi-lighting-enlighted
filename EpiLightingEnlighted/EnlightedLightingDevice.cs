@@ -1,6 +1,7 @@
 ﻿using System;
 using PepperDash.Core;
 using Newtonsoft.Json;
+using Crestron.SimplSharp;
 using PepperDash.Essentials.Core;
 using PepperDash.Essentials.Core.Bridges;
 using Crestron.SimplSharpPro.DeviceSupport;
@@ -47,11 +48,12 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         private readonly long _pollTimeMs;
         private readonly long _warningTimeoutMs;
         private readonly long _errorTimeoutMs;
+        private const long PingInterval = 50000; //50 seconds
+        private CTimer _pingTimer;
 
         public SendLightingApiRequest SendLightingRequest { get; set; }
-
-        public BoolFeedback OnlineFeedback { get; private set; }
-        //public IntFeedback StatusFeedback { get; private set; }
+        public BoolFeedback OnlineFeedback { get; private set; }        
+        private bool _online;
 
         /// <summary>
         /// Tracks name debugging state
@@ -72,6 +74,9 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
 	    {
 	        Debug.Console(0, this, "Constructing new Enlighted Lighting plugin instance using key: '{0}', name: '{1}'", key,
 	            name);
+
+            OnlineFeedback  = new BoolFeedback(()=> _online);
+	        StartPingTImer(); // Start CTimer
 	        
 	        _config = config;
 	        _pollTimeMs = (config.PollTimeMs > 0) ? config.PollTimeMs : 60000;
@@ -90,9 +95,9 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
             SendLightingRequest = new SendLightingApiRequest(_comms);
 
             //Taking config values and getting them to the client
-	        client.AuthorizationApiKeyData.ApiKey = config.ApiKey;
-            client.AuthorizationApiKeyData.ApiKeyUsername = config.ApiKeyUsername;
-            client.AuthorizationApiKeyData.HeaderUsesApiKey = config.HeaderUsesApiKey;
+            _comms.AuthorizationApiKeyData.ApiKey = config.ApiKey;	        
+            _comms.AuthorizationApiKeyData.ApiKeyUsername = config.ApiKeyUsername;
+            _comms.AuthorizationApiKeyData.HeaderUsesApiKey = config.HeaderUsesApiKey;
 
 	        _comms.ResponseReceived += _comms_ResponseReceived;
 
@@ -153,6 +158,13 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                 OnlineFeedback.LinkInputSig(trilist.BooleanInput[joinMap.IsOnline.JoinNumber]);
                 //StatusFeedback.LinkInputSig(trilist.UShortInput[joinMap.Status.JoinNumber]);
 
+                // Do OnlineFeedback fireupdate & create ctimer, start or give it 2 cyles 
+                // It's due time is going to be 3 x your poll rate (50 seconds), (timer will expire after 150... s you don't see it flap
+                // Everytime you get a repsonse reset the timer. Everytime you get a response trigger onlineFeedback fireupdate (be sure to set online true BEFORE you fire the update)
+                // WHen the ctimer expires then set to false and fire update. Check out MC 'controller' EPI. Look in the handleMessage that handles message sfrom websocket. PING/PONG response.
+                // 
+
+
                 // bridge online status 
                 // during testing this will never go high
                 
@@ -191,6 +203,10 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                 //If we get response.code 200 then parse
                 //Perahps some will help you know if your AUTH failed or if other things fail! Make it helpful.
                 //401 is unahtorizied and 403 is forboredden
+
+                ResetPingTimer(); // Reset CTimer with every response
+                _online = true;
+                OnlineFeedback.FireUpdate();
                 
                 if (string.IsNullOrEmpty(args.ContentString)) return;
 
@@ -228,7 +244,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                 // the last scene called, only the lighting levels per load which we are not interested in parsing or saving.
                 // Since the response is already being printed into console if/when debug is active we get the status response
                 // and can view the status via the API with no need to print it here.
-                Debug.Console(1, this, Debug.ErrorLogLevel.None, "Reponse from HTTPS:  {0}", responseObj);
+                Debug.Console(1, this, Debug.ErrorLogLevel.None, "Reponse from HTTPS:  {0}", responseObj);                
             }
             catch (Exception e)
             {
@@ -278,6 +294,37 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         public void SetApplyScene(string path)
         {
             _comms.SendRequest("Post", path, null);            
+        }
+
+        private void ResetPingTimer()
+        {
+            // This tells us we're online with the API and getting pings
+            _pingTimer.Reset(PingInterval);
+        }
+
+        private void StartPingTImer()
+        {
+            StopPingTimer();
+            _pingTimer = new CTimer(PingTimerCallback, null, PingInterval);
+        }
+
+        private void StopPingTimer()
+        {
+            if (_pingTimer == null)
+            {
+                return;
+            }
+
+            _pingTimer.Stop();
+            _pingTimer.Dispose();
+            _pingTimer = null;
+        }
+
+        private void PingTimerCallback(object o)
+        {
+            Debug.Console(1, this, Debug.ErrorLogLevel.Notice, "Ping timer expired");
+            _online = false;
+            OnlineFeedback.FireUpdate();
         }
     }   
 }

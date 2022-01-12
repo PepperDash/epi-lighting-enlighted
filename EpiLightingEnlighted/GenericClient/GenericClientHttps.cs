@@ -62,9 +62,11 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                 PeerVerification = false
             };
 
+            AuthorizationApiKeyData = new AuthorizationApiKeyData();
+
             Debug.Console(2, this, "_clientUrl: {0}", _client.Url.ToString());
 
-            Debug.Console(2, this, "{0}", new String('-', 80));
+            Debug.Console(2, this, "{0}", new String('-', 80));           
         }
 
         /// <summary>
