@@ -135,7 +135,10 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                 //Get property of class that has the Api Username from config
 
                 //Get Millisecond TimeStamp from EPOCH time [https://www.epochconverter.com/]                
-                var unixTimeStampMs = (Int32)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalMilliseconds;
+                //var unixTimeStampMs = (Int32)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalMilliseconds;
+
+                //Attempt alternate MS TimeStamp
+                var unixTimeStampMs = CurrentMillis.Millis;
                 
                 //Calculate authorization code
                 var hash = GetApiKey(AuthorizationApiKeyData.ApiKeyUsername, AuthorizationApiKeyData.ApiKey, unixTimeStampMs.ToString());                
