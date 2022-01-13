@@ -126,7 +126,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
 
             request.Header.SetHeaderValue("User-Agent", "curl/7.35.0");
             request.Header.SetHeaderValue("Host", "localhost");
-            request.Header.SetHeaderValue("accept", "application/xml");
+            request.Header.SetHeaderValue("Accept", "application/xml");
             request.Header.SetHeaderValue("Content-Type", "application/xml");
 
             if (AuthorizationApiKeyData.HeaderUsesApiKey)
@@ -134,8 +134,8 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                 //Get property of class that has the ApiKey from config
                 //Get property of class that has the Api Username from config
 
-                //Get Millisecond TimeStamp from EPOCH time [https://www.epochconverter.com/]
-                var unixTimeStampMs = (Int32)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
+                //Get Millisecond TimeStamp from EPOCH time [https://www.epochconverter.com/]                
+                var unixTimeStampMs = (Int32)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalMilliseconds;
                 
                 //Calculate authorization code
                 var hash = GetApiKey(AuthorizationApiKeyData.ApiKeyUsername, AuthorizationApiKeyData.ApiKey, unixTimeStampMs.ToString());                
