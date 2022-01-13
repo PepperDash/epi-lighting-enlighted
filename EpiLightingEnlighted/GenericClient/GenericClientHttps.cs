@@ -59,7 +59,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                 Password = Password,
                 KeepAlive = false,
                 HostVerification = false,
-                PeerVerification = false
+                PeerVerification = true
             };
 
             AuthorizationApiKeyData = new AuthorizationApiKeyData();
@@ -141,7 +141,12 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                 var unixTimeStampMs = CurrentMillis.Millis;
                 
                 //Calculate authorization code
-                var hash = GetApiKey(AuthorizationApiKeyData.ApiKeyUsername, AuthorizationApiKeyData.ApiKey, unixTimeStampMs.ToString());                
+                var hash = GetApiKey(AuthorizationApiKeyData.ApiKey, AuthorizationApiKeyData.ApiKeyUsername, unixTimeStampMs.ToString());
+
+                // var hashNew = GetApiKey("6eb6f07fd09b18dd61dd353dfb669820e7859cd3", "bob", "1457033811032");
+                // Debug.Console(2, this, "Test response: {0}", hashNew);
+                // Test Response = "E2-0A-C2-C9-63-CC-FA-CF-23-A1-F7-02-87-28-64-43-82-0E-66-D1" (Matches API example)
+
                 hash = (hash.Replace("-", "")).ToLower();                
                 Debug.Console(2, this, "_client Header ApiKey (Username): {0}", AuthorizationApiKeyData.ApiKeyUsername);
                 Debug.Console(1, this, "_client Header Authorization (hash combo of Username|Auth|TS): {0}", hash);
@@ -287,7 +292,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         /// </summary>
         /// <param name="apiKey">String of ApiKey associated to Username</param>
         /// <param name="username">String  Username of associated ApiKey</param>
-        /// <param name="timeStampMs">String of EPOCH time in MiliSeconds</param>
+        /// <param name="timeStampMs">String of dtae-time in MiliSeconds</param>
         /// <returns></returns>
         private static string GetApiKey(string apiKey, string username, string timeStampMs)
         {
