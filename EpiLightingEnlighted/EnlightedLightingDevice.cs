@@ -263,7 +263,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
             if (string.IsNullOrEmpty(cmd))
                 return;
 
-            if (_comms != null) _comms.SendRequest(cmd, string.Empty);
+            if (_comms != null) _comms.SendRequest("Post", cmd, string.Empty);
         }
 
         /// <summary>
@@ -284,7 +284,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         public void SetManualPoll()
         {
             //Custom command used to poll device
-            _comms.SendRequest("Get", "/ems/api/org/em/v1/energy", null);
+            _comms.SendRequest("Get", "ems/api/org/em/v1/energy", null);
         }
 
         /// <summary>

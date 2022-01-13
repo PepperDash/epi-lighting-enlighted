@@ -120,11 +120,14 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
             var request = new HttpsClientRequest
             {
                 RequestType = (RequestType)Enum.Parse(typeof(RequestType), requestType, true),
-                Url = new UrlParser(string.Format("{0}/{1}", Host, path)),
+                Url = new UrlParser(string.Format("{0}{1}", Host, path)),
                 ContentString = content
             };
 
-            request.Header.SetHeaderValue("Content-Type", "application/json");
+            request.Header.SetHeaderValue("User-Agent", "curl/7.35.0");
+            request.Header.SetHeaderValue("Host", "localhost");
+            request.Header.SetHeaderValue("accept", "application/xml");
+            request.Header.SetHeaderValue("Content-Type", "application/xml");
 
             if (AuthorizationApiKeyData.HeaderUsesApiKey)
             {
@@ -133,22 +136,23 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
 
                 //Get Millisecond TimeStamp from EPOCH time [https://www.epochconverter.com/]
                 var unixTimeStampMs = (Int32)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
-                Debug.Console(1, this, "_client UnixTimeStamp: {0}", unixTimeStampMs.ToString());
+                
                 //Calculate authorization code
-                var hash = GetApiKey(AuthorizationApiKeyData.ApiKey, AuthorizationApiKeyData.ApiKeyUsername, unixTimeStampMs.ToString());
-                Debug.Console(1, this, "_client ApiKey Hash: {0}", hash);
-                //NOTE: Do not include colon character after each header value, as character will be entered via the 'SetHeaderValue' function 
-                //NOTE: Header values are case sensitive
-                request.Header.SetHeaderValue("ApiKey", AuthorizationApiKeyData.ApiKey);
+                var hash = GetApiKey(AuthorizationApiKeyData.ApiKeyUsername, AuthorizationApiKeyData.ApiKey, unixTimeStampMs.ToString());                
+                hash = (hash.Replace("-", "")).ToLower();                
+                Debug.Console(2, this, "_client Header ApiKey (Username): {0}", AuthorizationApiKeyData.ApiKeyUsername);
+                Debug.Console(1, this, "_client Header Authorization (hash combo of Username|Auth|TS): {0}", hash);
+                Debug.Console(1, this, "_client Header ts (Unix Time stamp): {0}", unixTimeStampMs.ToString());
+
+
+                // NOTE: Do not include colon character after each header value as character will be entered via the 'SetHeaderValue' function 
+                // NOTE: Header values are case sensitive                
+                request.Header.SetHeaderValue("ApiKey", AuthorizationApiKeyData.ApiKeyUsername);
                 request.Header.SetHeaderValue("Authorization", hash);
                 request.Header.SetHeaderValue("ts", unixTimeStampMs.ToString());
             }
 
-            else if (!string.IsNullOrEmpty(AuthorizationBase64))
-            {
-                request.Header.SetHeaderValue("Authorization", AuthorizationBase64);
-                //request.Header.SetHeaderValue("Authorization:", )
-            }
+            else if (!string.IsNullOrEmpty(AuthorizationBase64)) { request.Header.SetHeaderValue("Authorization", AuthorizationBase64); }
 
             Debug.Console(2, "{0}", new String('-', 100));
             Debug.Console(2, this, @"Request:

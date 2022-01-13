@@ -26,7 +26,6 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
 		/// Serializes the poll time value
 		/// </summary>
 		/// <remarks>
-		/// This is an exmaple device plugin property.  This should be modified or deleted as needed for the plugin being built.
 		/// </remarks>
 		/// <value>
 		/// PollTimeMs property gets/sets the value as a long
@@ -45,7 +44,6 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
 		/// Serializes the warning timeout value
 		/// </summary>
 		/// <remarks>
-		/// This is an exmaple device plugin property.  This should be modified or deleted as needed for the plugin being built.
 		/// </remarks>
 		/// <value>
 		/// WarningTimeoutMs property gets/sets the value as a long
@@ -64,7 +62,6 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
 		/// Serializes the error timeout value
 		/// </summary>
 		/// /// <remarks>
-		/// This is an exmaple device plugin property.  This should be modified or deleted as needed for the plugin being built.
 		/// </remarks>
 		/// <value>
 		/// ErrorTimeoutMs property gets/sets the value as a long
@@ -83,7 +80,6 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         /// Serializes collection apiKey property
         /// </summary>
         /// /// <remarks>
-        /// This is an exmaple device plugin property.  This should be modified or deleted as needed for the plugin being built.
         /// </remarks>
         /// <value>
         /// ApiKey property gets/sets the value as a string
@@ -98,9 +94,40 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         [JsonProperty("apiKey")]
         public string ApiKey { get; set; }
 
+        /// <summary>
+        /// Determines if HTTPS header uses API key with time stamp
+        /// </summary>
+        /// /// <remarks>
+        /// </remarks>
+        /// <value>
+        /// true/false
+        /// </value>
+        /// <example>
+        /// <code>
+        /// "properties": {
+        ///		"headerUsesApiKey": true
+        /// }
+        /// </code>
+        /// </example>
         [JsonProperty("headerUsesApiKey")]
         public bool HeaderUsesApiKey { get; set; }
 
+        /// <summary>
+        /// Serializes username as part of HTTPS header
+        /// </summary>
+        /// <remarks>
+        /// Must match Enlighted Lighting Energy Manager (EM) authentication
+        /// </remarks>
+        /// <value>
+        /// String of username
+        /// </value>
+        /// <example>
+        /// <code>
+        /// "properties": {
+        ///		"apiKeyUsername": myUsername
+        /// }
+        /// </code>
+        /// </example>
         [JsonProperty("apiKeyUsername")]
         public string ApiKeyUsername { get; set; }
 

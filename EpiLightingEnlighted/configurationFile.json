@@ -33,7 +33,8 @@
           "warningTimeoutMs": 120000,
           "errorTimeoutMs": 180000,
           "apiKey": "d1990ce1280cd693fed2dca47e898f6f78fa7c5a",
-          "apiKeyUsername": "Jarndt",
+          "apiKeyUsername": "jarndt",
+          "headerUsesApiKey": true,
           "presets": {
             "comment": {
               "name": "Touch panel name given for each preset",
@@ -81,7 +82,7 @@
           "devices": [
             {
               "deviceKey": "lighting-1",
-              "joinStart": 1
+              "joinStart": 101
             }
           ]
         }
