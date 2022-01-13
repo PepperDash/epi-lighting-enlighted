@@ -1,12 +1,9 @@
 ﻿using System;
-using System.Globalization;
-using System.Net;
 using System.Text;
 using Crestron.SimplSharp;
 using Crestron.SimplSharp.Net.Http;
 using Crestron.SimplSharp.Net.Https;
 using PepperDash.Core;
-using PepperDash.Core.WebApi.Presets;
 using PepperDash.Essentials.Core;
 using RequestType = Crestron.SimplSharp.Net.Https.RequestType;
 using Crestron.SimplSharp.Cryptography;
@@ -21,8 +18,32 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
     {
         private const string DefaultRequestType = "GET";
         private readonly HttpsClient _client;               
+        private readonly CrestronQueue<Action> _requestQueue = new CrestronQueue<Action>(20);
 
-        private readonly CrestronQueue<Action> _requestQueue = new CrestronQueue<Action>(20);        
+        /// <summary>
+        /// Client host address
+        /// </summary>
+        public string Host { get; private set; }
+
+        /// <summary>
+        /// Client port
+        /// </summary>
+        public int Port { get; private set; }
+
+        /// <summary>
+        /// Client username
+        /// </summary>
+        public string Username { get; private set; }
+
+        /// <summary>
+        /// Client password
+        /// </summary>
+        public string Password { get; private set; }
+
+        /// <summary>
+        /// Base64 authorization
+        /// </summary>
+        public string AuthorizationBase64 { get; set; }
 
         /// <summary>
         /// Constructor
@@ -59,7 +80,8 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                 Password = Password,
                 KeepAlive = false,
                 HostVerification = false,
-                PeerVerification = true
+                PeerVerification = false,
+                Verbose = true                
             };
 
             AuthorizationApiKeyData = new AuthorizationApiKeyData();
@@ -70,37 +92,11 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         }
 
         /// <summary>
-        /// Client host address
-        /// </summary>
-        public string Host { get; private set; }
-
-        /// <summary>
-        /// Client port
-        /// </summary>
-        public int Port { get; private set; }
-
-        /// <summary>
-        /// Client username
-        /// </summary>
-        public string Username { get; private set; }
-
-        /// <summary>
-        /// Client password
-        /// </summary>
-        public string Password { get; private set; }
-
-        /// <summary>
-        /// Base64 authorization
-        /// </summary>
-        public string AuthorizationBase64 { get; set; }
-
-        /// <summary>
         /// Custom Authorization with ApiKeyData
         /// </summary>
         public AuthorizationApiKeyData AuthorizationApiKeyData { get; set; }
 
         #region IRestfulComms Members
-
         /// <summary>
         /// Implements IKeyed interface
         /// </summary>
@@ -123,43 +119,22 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                 Url = new UrlParser(string.Format("{0}{1}", Host, path)),
                 ContentString = content
             };
-
-            request.Header.SetHeaderValue("User-Agent", "curl/7.35.0");
-            request.Header.SetHeaderValue("Host", "localhost");
-            request.Header.SetHeaderValue("Accept", "application/xml");
-            request.Header.SetHeaderValue("Content-Type", "application/xml");
+            
+            request.Header.SetHeaderValue("Accept", "application/json");
+            request.Header.SetHeaderValue("Content-Type", "application/json");
 
             if (AuthorizationApiKeyData.HeaderUsesApiKey)
             {
-                //Get property of class that has the ApiKey from config
-                //Get property of class that has the Api Username from config
-
-                //Get Millisecond TimeStamp from EPOCH time [https://www.epochconverter.com/]                
-                //var unixTimeStampMs = (Int32)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalMilliseconds;
-
-                //Attempt alternate MS TimeStamp
-                var unixTimeStampMs = CurrentMillis.Millis;
-                
-                //Calculate authorization code
-                var hash = GetApiKey(AuthorizationApiKeyData.ApiKey, AuthorizationApiKeyData.ApiKeyUsername, unixTimeStampMs.ToString());
-
-                // var hashNew = GetApiKey("6eb6f07fd09b18dd61dd353dfb669820e7859cd3", "bob", "1457033811032");
-                // Debug.Console(2, this, "Test response: {0}", hashNew);
-                // Test Response = "E2-0A-C2-C9-63-CC-FA-CF-23-A1-F7-02-87-28-64-43-82-0E-66-D1" (Matches API example)
-
-                hash = (hash.Replace("-", "")).ToLower();                
-                Debug.Console(2, this, "_client Header ApiKey (Username): {0}", AuthorizationApiKeyData.ApiKeyUsername);
-                Debug.Console(1, this, "_client Header Authorization (hash combo of Username|Auth|TS): {0}", hash);
-                Debug.Console(1, this, "_client Header ts (Unix Time stamp): {0}", unixTimeStampMs.ToString());
-
-
-                // NOTE: Do not include colon character after each header value as character will be entered via the 'SetHeaderValue' function 
-                // NOTE: Header values are case sensitive                
+                // TimeStamp in Ms
+                var unixTimeStampMs = CurrentMillis.Millis;                
+                // Calculate authorization code
+                var hash = GetApiKey(AuthorizationApiKeyData.ApiKeyUsername, AuthorizationApiKeyData.ApiKey, unixTimeStampMs.ToString());    
+                // Do not include colon character after each header value as character will be entered via the 'SetHeaderValue' function 
+                // Header values are case sensitive                
                 request.Header.SetHeaderValue("ApiKey", AuthorizationApiKeyData.ApiKeyUsername);
                 request.Header.SetHeaderValue("Authorization", hash);
                 request.Header.SetHeaderValue("ts", unixTimeStampMs.ToString());
             }
-
             else if (!string.IsNullOrEmpty(AuthorizationBase64)) { request.Header.SetHeaderValue("Authorization", AuthorizationBase64); }
 
             Debug.Console(2, "{0}", new String('-', 100));
@@ -167,10 +142,11 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                 url: {0}
                 path: {1}
                 content: {2}
-                requestType: {3}",
-                request.Url, path, request.ContentString, request.RequestType);
+                requestType: {3}
+                requestHeader: {4}",
+                request.Url, path, request.ContentString, request.RequestType, request.Header);
             Debug.Console(2, "{0}", new String('-', 100));
-
+            
             try
             {
                 if (_client.ProcessBusy)
@@ -179,7 +155,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                     {
                         if (response == null)
                         {                            
-                            Debug.Console(1, this, "_client.Display: response is null, error: {0}", error);
+                            Debug.Console(1, this, "Response is null, error: {0}", error);
                             return;
                         }                        
 
@@ -192,7 +168,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                     {
                         if (response == null)
                         {
-                            Debug.Console(1, this, "_client.Display: response is null, error: {0}", error);
+                            Debug.Console(1, this, "Response is null, error: {0}", error);
                             return;
                         }
 
@@ -225,27 +201,28 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         public event EventHandler<GenericClientResponseEventArgs> ResponseReceived;
 
         /// <summary>
-        /// Sends OR queues a request to the client
+        /// Sends or queues request to the client
         /// </summary>
-        /// <param name="request"></param>
+        /// <param name="request">String request</param>
         /// <param name="contentString"></param>
         public void SendRequest(string request, string contentString)
         {
             if (string.IsNullOrEmpty(request))
             {
-                Debug.Console(2, this, Debug.ErrorLogLevel.Error, "SendRequest: request is null or empty");
+                Debug.Console(2, this, Debug.ErrorLogLevel.Error, "SendRequest: Request is null or empty");
                 return;
             }
-
             SendRequest(DefaultRequestType, request, contentString);
         }
-
         #endregion
 
+        /// <summary>
+        /// Callback when receiving responses, checks queue if additional messages need to be sent
+        /// </summary>
+        /// <param name="args"></param>
         private void OnResponseRecieved(GenericClientResponseEventArgs args)
         {
             Debug.Console(2, this, "OnResponseRecieved: args.Code = {0}, args.ContentString = {1}", args.Code, args.ContentString);
-
             CheckRequestQueue();
 
             var handler = ResponseReceived;
@@ -253,11 +230,12 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
             {
                 return;
             }
-
             handler(this, args);
         }
 
-        // checks request queue and issues next request
+        /// <summary>
+        /// Checks request queue and issues next request
+        /// </summary>
         private void CheckRequestQueue()
         {
             Debug.Console(2, this, "CheckRequestQueue: _requestQueue.Count = {0}", _requestQueue.Count);
@@ -270,7 +248,12 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
             }
         }
 
-        // encodes username and password, returning a Base64 encoded string
+        /// <summary>
+        /// Encodes username and password, returning a Base64 encoded string 
+        /// </summary>
+        /// <param name="username"></param>
+        /// <param name="password"></param>
+        /// <returns></returns>
         private string EncodeBase64(string username, string password)
         {
             if (string.IsNullOrEmpty(username)) return "";
@@ -294,16 +277,19 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         /// <param name="username">String  Username of associated ApiKey</param>
         /// <param name="timeStampMs">String of dtae-time in MiliSeconds</param>
         /// <returns></returns>
-        private static string GetApiKey(string apiKey, string username, string timeStampMs)
+        private static string GetApiKey(string username, string apiKey, string timeStampMs)
         {
-            //Create object used for calculating SHA1 
+            // Create object used for calculating SHA1 
             var hashCalculator = new SHA1CryptoServiceProvider();
-            //Create string that combines all three substrings
+            // Create string that combines all three substrings
             var sha1StringCombined = username + apiKey + timeStampMs;
-            //Calculate the hash with encoding into Bytes
+            // Calculate the hash with encoding into Bytes
             var hashbytes = hashCalculator.ComputeHash(Encoding.UTF8.GetBytes(sha1StringCombined));            
-            //Convert Bytes to a string
-            return BitConverter.ToString(hashbytes);
+            // Convert Bytes to a string                                  
+            var hashBytesConverted =  BitConverter.ToString(hashbytes);
+            // Remove dash characters from bitConverter and lower all alpha characters
+            hashBytesConverted = (hashBytesConverted.Replace("-", "")).ToLower();
+            return hashBytesConverted;
         }
     }
 }

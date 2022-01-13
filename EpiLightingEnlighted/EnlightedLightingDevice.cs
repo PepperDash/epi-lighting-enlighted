@@ -8,9 +8,8 @@ using Crestron.SimplSharpPro.DeviceSupport;
 
 namespace PepperDash.Essentials.Plugin.EnlightedLighting
 {
-    //Would be smart to print out paths being sent to confirm the slashes are needed or not
-
-    //Make a public class of functions to send paths or requests
+    
+    // Public class of functions to send paths or requests
     public class SendLightingApiRequest
     {        
         /// <summary>
@@ -27,6 +26,10 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
             _comms = comms;
         }
 
+        /// <summary>
+        /// SIMPL+ method to call a lighting scene
+        /// </summary>
+        /// <param name="path"></param>
         public void ApplyScene(string path)
         {                        
             //_comms.SendRequest(path, null);
@@ -53,7 +56,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
 
         public SendLightingApiRequest SendLightingRequest { get; set; }
         public BoolFeedback OnlineFeedback { get; private set; }        
-        private bool _online;
+        private bool _deviceOnline;
 
         /// <summary>
         /// Tracks name debugging state
@@ -75,7 +78,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
 	        Debug.Console(0, this, "Constructing new Enlighted Lighting plugin instance using key: '{0}', name: '{1}'", key,
 	            name);
 
-            OnlineFeedback  = new BoolFeedback(()=> _online);
+            OnlineFeedback  = new BoolFeedback(()=> _deviceOnline);
 	        StartPingTImer(); // Start CTimer
 	        
 	        _config = config;
@@ -199,13 +202,13 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
             try
             {
                 Debug.Console(1, this, "Respone Code: {0}", args.Code);
-                Debug.Console(0, this, "Response URL: {0}", args.ResponseUrl);
+                Debug.Console(1, this, "Response URL: {0}", args.ResponseUrl);
                 //If we get response.code 200 then parse
                 //Perahps some will help you know if your AUTH failed or if other things fail! Make it helpful.
                 //401 is unahtorizied and 403 is forboredden
 
                 ResetPingTimer(); // Reset CTimer with every response
-                _online = true;
+                _deviceOnline = true;
                 OnlineFeedback.FireUpdate();
                 
                 if (string.IsNullOrEmpty(args.ContentString)) return;
@@ -284,7 +287,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         public void SetManualPoll()
         {
             //Custom command used to poll device
-            _comms.SendRequest("Get", "ems/api/org/em/v1/energy", null);
+            _comms.SendRequest("Get", "/ems/api/org/em/v1/energy", string.Empty);
         }
 
         /// <summary>
@@ -323,7 +326,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         private void PingTimerCallback(object o)
         {
             Debug.Console(1, this, Debug.ErrorLogLevel.Notice, "Ping timer expired");
-            _online = false;
+            _deviceOnline = false;
             OnlineFeedback.FireUpdate();
         }
     }   

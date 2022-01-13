@@ -137,11 +137,9 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                     {
                         if (response == null)
                         {
-                            Debug.Console(1, this, "_client.Display: response is null, error: {0}", error);
+                            Debug.Console(1, this, "Response is null, error: {0}", error);
                             return;
                         }
-
-
                         OnResponseRecieved(new GenericClientResponseEventArgs(response.Code, response.ContentString, response.ResponseUrl));
                     }));
                 }
@@ -151,10 +149,9 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                     {
                         if (response == null)
                         {
-                            Debug.Console(1, this, "_client.Display: response is null, error: {0}", error);
+                            Debug.Console(1, this, "Response is null, error: {0}", error);
                             return;
                         }
-
                         OnResponseRecieved(new GenericClientResponseEventArgs(response.Code, response.ContentString, response.ResponseUrl));
                     });
                 }
@@ -181,7 +178,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         {
             if (string.IsNullOrEmpty(request))
             {
-                Debug.Console(2, this, Debug.ErrorLogLevel.Error, "SendRequest: request is null or empty");
+                Debug.Console(2, this, Debug.ErrorLogLevel.Error, "SendRequest: Request is null or empty");
                 return;
             }
 
@@ -190,6 +187,10 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
 
         #endregion
 
+        /// <summary>
+        /// Callback when receiving responses, checks queue if additional messages need to be sent
+        /// </summary>
+        /// <param name="args"></param>
         private void OnResponseRecieved(GenericClientResponseEventArgs args)
         {
             Debug.Console(2, this, "OnResponseRecieved: args.Code = {0}, args.ContentString = {1}", args.Code, args.ContentString);
@@ -205,7 +206,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
             handler(this, args);
         }
 
-        // checks request queue and issues next request
+        // Checks request queue and issues next request
         private void CheckRequestQueue()
         {
             Debug.Console(2, this, "CheckRequestQueue: _requestQueue.Count = {0}", _requestQueue.Count);
@@ -218,7 +219,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
             }
         }
 
-        // encodes username and password, returning a Base64 encoded string
+        // Encodes username and password, returning a Base64 encoded string
         private string EncodeBase64(string username, string password)
         {
             if (string.IsNullOrEmpty(username)) return "";

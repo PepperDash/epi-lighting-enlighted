@@ -26,13 +26,15 @@
             "method": "https",
             "tcpSshProperties": {
               "address": "emc1-cs.emc.enlightedinc.com",
-              "port": 443
+              "port": 443,
+              "username": "",
+              "password": ""
             }
           },
           "pollTimeMs": 60000,
           "warningTimeoutMs": 120000,
           "errorTimeoutMs": 180000,
-          "apiKey": "d1990ce1280cd693fed2dca47e898f6f78fa7c5a",
+          "apiKey": "a48701735877108d3585b910a74352066b474414",
           "apiKeyUsername": "jarndt",
           "headerUsesApiKey": true,
           "presets": {
