@@ -26,9 +26,7 @@
             "method": "https",
             "tcpSshProperties": {
               "address": "emc1-cs.emc.enlightedinc.com",
-              "port": 443,
-              "username": "",
-              "password": ""
+              "port": 443
             }
           },
           "pollTimeMs": 60000,

@@ -139,7 +139,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
             {
                 var joinMap = new EnlightedLightingBridgeJoinMap(joinStart);
 
-                // This adds the join map to the collection on the bridge IF not null
+                // Add the join map to the collection on the bridge if not null
                 if (bridge != null) bridge.AddJoinMap(Key, joinMap);
 
                 var customJoins = JoinMapHelper.TryGetJoinMapAdvancedForDevice(joinMapKey);
@@ -151,25 +151,15 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                 Debug.Console(0, this, "Linking to Trilist '{0}'", trilist.ID.ToString("X"));
                 Debug.Console(0, this, "Linking to Bridge Type {0}", GetType().Name);
 
-                // device name to bridge
+                // Device name to bridge
                 trilist.SetString(joinMap.Name.JoinNumber, Name);                                
                 trilist.SetSigTrueAction(joinMap.Poll.JoinNumber, SetManualPoll);
                 trilist.SetStringSigAction(joinMap.ManualCommand.JoinNumber, SetManualCommand);
                 trilist.SetStringSigAction(joinMap.ApplyScene.JoinNumber, SetApplyScene);
 
-                // device online status to bridge
+                // Device online status to bridge
                 OnlineFeedback.LinkInputSig(trilist.BooleanInput[joinMap.IsOnline.JoinNumber]);
                 //StatusFeedback.LinkInputSig(trilist.UShortInput[joinMap.Status.JoinNumber]);
-
-                // Do OnlineFeedback fireupdate & create ctimer, start or give it 2 cyles 
-                // It's due time is going to be 3 x your poll rate (50 seconds), (timer will expire after 150... s you don't see it flap
-                // Everytime you get a repsonse reset the timer. Everytime you get a response trigger onlineFeedback fireupdate (be sure to set online true BEFORE you fire the update)
-                // WHen the ctimer expires then set to false and fire update. Check out MC 'controller' EPI. Look in the handleMessage that handles message sfrom websocket. PING/PONG response.
-                // 
-
-
-                // bridge online status 
-                // during testing this will never go high
                 
                 trilist.OnlineStatusChange += (device, args) =>
                 {
@@ -193,15 +183,15 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         /// <param name="state"></param>
         public void SetExtendedDebuggingState(bool state)
         {
-            ExtendedDebuggingState = state;
-            Debug.Console(0, this, "Extended Debugging: {0}", ExtendedDebuggingState ? "On" : "Off");
+            //ExtendedDebuggingState = state;
+            Debug.Console(0, this, "Extended Debugging: {0}", state ? "On" : "Off");
         }
 
         private void _comms_ResponseReceived(object sender, GenericClientResponseEventArgs args)
         {
             try
             {
-                Debug.Console(1, this, "Respone Code: {0}", args.Code);
+                Debug.Console(1, this, "Response Code: {0}", args.Code);
                 Debug.Console(1, this, "Response URL: {0}", args.ResponseUrl);
                 //If we get response.code 200 then parse
                 //Perahps some will help you know if your AUTH failed or if other things fail! Make it helpful.
@@ -213,13 +203,34 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                 
                 if (string.IsNullOrEmpty(args.ContentString)) return;
 
-                if (args.Code != 200) return;
-                if (args.ResponseUrl.Contains("applyScene"))
-                {                   
-                    var obj = JsonConvert.DeserializeObject<EnlightedLightingResponseStatus>(args.ContentString);
-                    if (obj != null)
-                        ParseStatusResponse(obj);
+                switch (args.Code)
+                {
+                    case 200: // Ok, valid response, request successful
+                        return;                        
+                    case 302:
+                        Debug.Console(1, this, Debug.ErrorLogLevel.Error, "Moved temporarily, user not authenticated");
+                        break;
+                    case 401:
+                        Debug.Console(1, this, Debug.ErrorLogLevel.Error, "User authentication failed");
+                        break;
+                    case 403:
+                        Debug.Console(1, this, Debug.ErrorLogLevel.Error, "Request forbidden, permission denied, no access to the user");
+                        break;
+                    case 404:
+                        Debug.Console(1, this, Debug.ErrorLogLevel.Error, "API not valid or not found");
+                        break;
+                    case 405:
+                        Debug.Console(1, this, Debug.ErrorLogLevel.Error, "Unknown error");
+                        break;
+                    case 408:
+                        Debug.Console(1, this, Debug.ErrorLogLevel.Error, "API received after time expired, API canceled");
+                        break;
                 }
+
+                if (!args.ResponseUrl.Contains("applyScene")) return;
+                var obj = JsonConvert.DeserializeObject<EnlightedLightingResponseStatus>(args.ContentString);
+                if (obj != null)
+                    ParseStatusResponse(obj);
             }
             catch (Exception e)
             {
@@ -247,7 +258,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                 // the last scene called, only the lighting levels per load which we are not interested in parsing or saving.
                 // Since the response is already being printed into console if/when debug is active we get the status response
                 // and can view the status via the API with no need to print it here.
-                Debug.Console(1, this, Debug.ErrorLogLevel.None, "Reponse from HTTPS:  {0}", responseObj);                
+                Debug.Console(1, this, Debug.ErrorLogLevel.None, "Reponse from device:  {0}", responseObj);                
             }
             catch (Exception e)
             {
@@ -270,7 +281,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         }
 
         /// <summary>
-        /// Sent custom command using GET response type
+        /// Send custom command using GET request type
         /// </summary>
         /// <param name="cmd">Path of custom command</param>
         public void SetManualCommand(string cmd)
@@ -282,7 +293,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         }
 
         /// <summary>
-        /// Trigger SendText method to Manually poll device version
+        /// Manually poll device using SendRequest method
         /// </summary>
         public void SetManualPoll()
         {
@@ -328,6 +339,13 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
             Debug.Console(1, this, Debug.ErrorLogLevel.Notice, "Ping timer expired");
             _deviceOnline = false;
             OnlineFeedback.FireUpdate();
+        }
+
+        private void RequestStartupInfo()
+        {
+            // Use the 'Get all floors' command to retrieve floor IDs -  "/ems/api/org/floor/list"
+            // Use the 'Get Switch Groups' command to retrieve Switch IDs based on switch names - "/ems/api/org/switchgroups/list/{property}/{pid}"
+            // Use the 'Get Switch Scenes' command to retrieve scene IDs for each switch - "/ems/api/org/switch/v1/getSwitchScenes/{floor_id}/{switch_name}"
         }
     }   
 }

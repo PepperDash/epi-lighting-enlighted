@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Text;
+using PepperDash.Core;
 using Crestron.SimplSharp;
+using PepperDash.Essentials.Core;
 using Crestron.SimplSharp.Net.Http;
 using Crestron.SimplSharp.Net.Https;
-using PepperDash.Core;
-using PepperDash.Essentials.Core;
-using RequestType = Crestron.SimplSharp.Net.Https.RequestType;
 using Crestron.SimplSharp.Cryptography;
 using SHA1 = System.Security.Cryptography.SHA1;
+using RequestType = Crestron.SimplSharp.Net.Https.RequestType;
+
 
 namespace PepperDash.Essentials.Plugin.EnlightedLighting
 {
@@ -19,6 +20,10 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         private const string DefaultRequestType = "GET";
         private readonly HttpsClient _client;               
         private readonly CrestronQueue<Action> _requestQueue = new CrestronQueue<Action>(20);
+        /// <summary>
+        /// Custom Authorization with ApiKeyData
+        /// </summary>
+        public AuthorizationApiKeyData AuthorizationApiKeyData { get; set; }
 
         /// <summary>
         /// Client host address
@@ -53,6 +58,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         public GenericClientHttps(string key, EssentialsControlPropertiesConfig controlConfig)
         {
             Key = key;
+            AuthorizationApiKeyData = new AuthorizationApiKeyData();
 
             Host = (controlConfig.TcpSshProperties.Port >= 1 && controlConfig.TcpSshProperties.Port <= 65535)
                 ? String.Format("https://{0}:{1}", controlConfig.TcpSshProperties.Address,
@@ -83,24 +89,20 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                 PeerVerification = false,
                 Verbose = true                
             };
-
-            AuthorizationApiKeyData = new AuthorizationApiKeyData();
-
+            
             Debug.Console(2, this, "_clientUrl: {0}", _client.Url.ToString());
-
             Debug.Console(2, this, "{0}", new String('-', 80));           
         }
-
-        /// <summary>
-        /// Custom Authorization with ApiKeyData
-        /// </summary>
-        public AuthorizationApiKeyData AuthorizationApiKeyData { get; set; }
 
         #region IRestfulComms Members
         /// <summary>
         /// Implements IKeyed interface
         /// </summary>
         public string Key { get; private set; }
+        /// <summary>
+        /// Client response event
+        /// </summary>
+        public event EventHandler<GenericClientResponseEventArgs> ResponseReceived;
 
         /// <summary>
         /// Sends request to the client
@@ -196,11 +198,6 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         }
 
         /// <summary>
-        /// Client response event
-        /// </summary>
-        public event EventHandler<GenericClientResponseEventArgs> ResponseReceived;
-
-        /// <summary>
         /// Sends or queues request to the client
         /// </summary>
         /// <param name="request">String request</param>
@@ -226,10 +223,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
             CheckRequestQueue();
 
             var handler = ResponseReceived;
-            if (handler == null)
-            {
-                return;
-            }
+            if (handler == null) { return; } // If null no one is listening
             handler(this, args);
         }
 
