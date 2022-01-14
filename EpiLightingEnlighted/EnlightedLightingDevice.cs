@@ -34,7 +34,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         {                        
             //_comms.SendRequest(path, null);
             //Assume case sensitive with requestType
-            _comms.SendRequest("Post", path, null);
+            _comms.SendRequest("Post", path, string.Empty);
         }
     }
 
@@ -154,12 +154,12 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                 // Device name to bridge
                 trilist.SetString(joinMap.Name.JoinNumber, Name);                                
                 trilist.SetSigTrueAction(joinMap.Poll.JoinNumber, SetManualPoll);
-                trilist.SetStringSigAction(joinMap.ManualCommand.JoinNumber, SetManualCommand);
+                trilist.SetStringSigAction(joinMap.GetCustomPath.JoinNumber, GetCustomPath);
+                trilist.SetStringSigAction(joinMap.PostCustomPath.JoinNumber, PostCustomPath);
                 trilist.SetStringSigAction(joinMap.ApplyScene.JoinNumber, SetApplyScene);
 
                 // Device online status to bridge
                 OnlineFeedback.LinkInputSig(trilist.BooleanInput[joinMap.IsOnline.JoinNumber]);
-                //StatusFeedback.LinkInputSig(trilist.UShortInput[joinMap.Status.JoinNumber]);
                 
                 trilist.OnlineStatusChange += (device, args) =>
                 {
@@ -208,10 +208,10 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                     case 200: // Ok, valid response, request successful
                         return;                        
                     case 302:
-                        Debug.Console(1, this, Debug.ErrorLogLevel.Error, "Moved temporarily, user not authenticated");
+                        Debug.Console(1, this, Debug.ErrorLogLevel.Error, "Moved temporarily, user not authenticated, URL redirection");
                         break;
                     case 401:
-                        Debug.Console(1, this, Debug.ErrorLogLevel.Error, "User authentication failed");
+                        Debug.Console(1, this, Debug.ErrorLogLevel.Error, "Request not completed, lacks valid authentication credentials for requested resource");
                         break;
                     case 403:
                         Debug.Console(1, this, Debug.ErrorLogLevel.Error, "Request forbidden, permission denied, no access to the user");
@@ -220,7 +220,13 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                         Debug.Console(1, this, Debug.ErrorLogLevel.Error, "API not valid or not found");
                         break;
                     case 405:
-                        Debug.Console(1, this, Debug.ErrorLogLevel.Error, "Unknown error");
+                        Debug.Console(1, this, Debug.ErrorLogLevel.Error, "Method not allowed: Server understood request but method not supported by target resource");
+                        break;
+                    case 406:
+                        Debug.Console(1, this, Debug.ErrorLogLevel.Error, "Not acceptable, server cannot produce response from given request");
+                        break;
+                    case 407:
+                        Debug.Console(1, this, Debug.ErrorLogLevel.Error, "Request not applied, lacks valid authentication credentials for proxy server between browser and server to access requested resource");
                         break;
                     case 408:
                         Debug.Console(1, this, Debug.ErrorLogLevel.Error, "API received after time expired, API canceled");
@@ -272,7 +278,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         /// Send text to device
         /// </summary>
         /// <param name="cmd">Path to send to device</param>
-        public void SendText(string cmd)
+        public void PostCustomPath(string cmd)
         {
             if (string.IsNullOrEmpty(cmd))
                 return;
@@ -284,12 +290,12 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         /// Send custom command using GET request type
         /// </summary>
         /// <param name="cmd">Path of custom command</param>
-        public void SetManualCommand(string cmd)
+        public void GetCustomPath(string cmd)
         {
             if (string.IsNullOrEmpty(cmd))
                 return;
 
-            if (_comms != null) _comms.SendRequest(cmd, string.Empty);
+            if (_comms != null) _comms.SendRequest("Get", cmd, string.Empty);
         }
 
         /// <summary>

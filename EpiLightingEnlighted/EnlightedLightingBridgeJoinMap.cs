@@ -69,8 +69,22 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                 JoinType = eJoinType.Serial
             });
 
-        [JoinName("ManualCommand")]
-        public JoinDataComplete ManualCommand = new JoinDataComplete(
+        [JoinName("GetCustomPath")]
+        public JoinDataComplete GetCustomPath = new JoinDataComplete(
+            new JoinData()
+            {
+                JoinNumber = 1,
+                JoinSpan = 1
+            },
+            new JoinMetadata()
+            {
+                Description = "GET path manually, do not include header or delimeter",
+                JoinCapabilities = eJoinCapabilities.FromSIMPL,
+                JoinType = eJoinType.Serial
+            });
+
+        [JoinName("PostCustomPath")]
+        public JoinDataComplete PostCustomPath = new JoinDataComplete(
             new JoinData()
             {
                 JoinNumber = 2,
@@ -78,7 +92,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
             },
             new JoinMetadata()
             {
-                Description = "Send command path manually (do not include header or delimeter)",
+                Description = "POST path manually, do not include header or delimeter",
                 JoinCapabilities = eJoinCapabilities.FromSIMPL,
                 JoinType = eJoinType.Serial
             });
