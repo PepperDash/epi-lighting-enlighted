@@ -146,8 +146,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                 Debug.Console(0, this, "Linking to Bridge Type {0}", GetType().Name);
 
                 // Device name to bridge
-                trilist.SetString(_joinMap.Name.JoinNumber, Name);                                
-                trilist.SetSigTrueAction(_joinMap.Poll.JoinNumber, SetManualPoll);
+                trilist.SetString(_joinMap.Name.JoinNumber, Name);
                 trilist.SetSigTrueAction(_joinMap.PrintAllInfo.JoinNumber, PrintInformation);
                 trilist.SetStringSigAction(_joinMap.GetCustomPath.JoinNumber, GetCustomPath);
                 trilist.SetStringSigAction(_joinMap.PostCustomPath.JoinNumber, PostCustomPath);                
@@ -295,15 +294,6 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         }
 
         /// <summary>
-        /// Manually poll device using SendRequest method
-        /// </summary>
-        public void SetManualPoll()
-        {
-            //Custom command used to poll device
-            _comms.SendRequest("Get", "/ems/api/org/em/v1/energy", string.Empty);
-        }
-
-        /// <summary>
         /// Apply lighting scene using scene ID and virtualSwitchIdentifer
         /// </summary>
         /// <param name="sceneId">Path of URL, requires forward slash prefix</param>
@@ -325,6 +315,15 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                 Debug.Console(2, this, Debug.ErrorLogLevel.Error, "SetApplySceneWithIndex: InnerException: {0} Message: {1} StackTrace: {2}", e.InnerException, e.Message, e.StackTrace);
             }
             
+        }
+
+        /// <summary>
+        /// Manually poll device using SendRequest method
+        /// </summary>
+        public void SetManualPoll()
+        {
+            //Custom command used to poll device
+            _comms.SendRequest("Get", "/ems/api/org/em/v1/energy", string.Empty);
         }
 
         private void ResetPingTimer()
@@ -356,6 +355,8 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
             Debug.Console(1, this, Debug.ErrorLogLevel.Notice, "Ping timer expired");
             _deviceOnline = false;
             OnlineFeedback.FireUpdate();
+            SetManualPoll();
+            StartPingTImer();
         }
 
         private void PrintInformation()

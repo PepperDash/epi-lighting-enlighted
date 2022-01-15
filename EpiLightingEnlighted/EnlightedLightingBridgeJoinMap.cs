@@ -15,7 +15,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
 	public class EnlightedLightingBridgeJoinMap : JoinMapBaseAdvanced
 	{
 
-		#region Digital	
+		#region Digital
 
         [JoinName("IsOnline")]
         public JoinDataComplete IsOnline = new JoinDataComplete(
@@ -28,20 +28,6 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
             {
                 Description = "Device Online",
                 JoinCapabilities = eJoinCapabilities.ToSIMPL,
-                JoinType = eJoinType.Digital
-            });
-
-        [JoinName("Poll")]
-        public JoinDataComplete Poll = new JoinDataComplete(
-            new JoinData()
-            {
-                JoinNumber = 1,
-                JoinSpan = 1
-            },
-            new JoinMetadata()
-            {
-                Description = "Manual Poll Device",
-                JoinCapabilities = eJoinCapabilities.FromSIMPL,
                 JoinType = eJoinType.Digital
             });
 
@@ -61,7 +47,6 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
 
 		#endregion
 
-
 		#region Analog
 		
         [JoinName("Scene")]
@@ -79,7 +64,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
             });
 		#endregion
 
-		#region Serial		
+		#region Serial
 
         [JoinName("Name")]
         public JoinDataComplete Name = new JoinDataComplete(
