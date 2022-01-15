@@ -307,6 +307,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                 var found = _config.SceneDictionary.TryGetValue(dictionaryKeyIndex, out sceneOjbect);
 
                 if (!found) Debug.Console(2, this, Debug.ErrorLogLevel.Error, "SetApplySceneWithIndex: Variable from SceneDictionary not found");
+                if (sceneId == 0) { return; }
                 var sTemp = string.Format("/ems/api/org/switch/v1/op/applyScene/{0}/{1}?time=0", _config.VirtualSwitchIdentifier, sceneOjbect.SceneId);
                 _comms.SendRequest("Post", sTemp, string.Empty);
             }

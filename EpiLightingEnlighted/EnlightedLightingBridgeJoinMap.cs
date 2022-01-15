@@ -35,7 +35,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         public JoinDataComplete PrintAllInfo = new JoinDataComplete(
             new JoinData()
             {
-                JoinNumber = 3,
+                JoinNumber = 1,
                 JoinSpan = 1
             },
             new JoinMetadata()
