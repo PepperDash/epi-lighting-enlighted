@@ -308,15 +308,23 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         /// </summary>
         /// <param name="sceneId">Path of URL, requires forward slash prefix</param>
         public void SetApplySceneWithId(ushort sceneId)
-        {   
-            var dictionaryKeyIndex = "scene" + sceneId;
-            Debug.Console(2, this, Debug.ErrorLogLevel.Error, "SetApplySceneWithIndex: {0}", dictionaryKeyIndex);
-            EnlightedLightingSceneIo sceneOjbect;
-            var found = _config.SceneDictionary.TryGetValue(dictionaryKeyIndex, out sceneOjbect);
+        {
+            try
+            {
+                var dictionaryKeyIndex = "scene" + sceneId;
+                Debug.Console(2, this, Debug.ErrorLogLevel.Error, "SetApplySceneWithIndex: {0}", dictionaryKeyIndex);
+                EnlightedLightingSceneIo sceneOjbect;
+                var found = _config.SceneDictionary.TryGetValue(dictionaryKeyIndex, out sceneOjbect);
 
-            if (!found) Debug.Console(2, this, Debug.ErrorLogLevel.Error, "SetApplySceneWithIndex: Variable from SceneDictionary not found");
-            var sTemp = string.Format("/ems/api/org/switch/v1/op/applyScene/{0}/{1}?time=0", _config.VirtualSwitchIdentifier, sceneOjbect.SceneId);
-            _comms.SendRequest("Post", sTemp, string.Empty);
+                if (!found) Debug.Console(2, this, Debug.ErrorLogLevel.Error, "SetApplySceneWithIndex: Variable from SceneDictionary not found");
+                var sTemp = string.Format("/ems/api/org/switch/v1/op/applyScene/{0}/{1}?time=0", _config.VirtualSwitchIdentifier, sceneOjbect.SceneId);
+                _comms.SendRequest("Post", sTemp, string.Empty);
+            }
+            catch (Exception e)
+            {
+                Debug.Console(2, this, Debug.ErrorLogLevel.Error, "SetApplySceneWithIndex: InnerException: {0} Message: {1} StackTrace: {2}", e.InnerException, e.Message, e.StackTrace);
+            }
+            
         }
 
         private void ResetPingTimer()
