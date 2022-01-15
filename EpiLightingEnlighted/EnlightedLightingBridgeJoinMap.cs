@@ -45,13 +45,25 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                 JoinType = eJoinType.Digital
             });
 
+        [JoinName("PrintAllInfo")]
+        public JoinDataComplete PrintAllInfo = new JoinDataComplete(
+            new JoinData()
+            {
+                JoinNumber = 3,
+                JoinSpan = 1
+            },
+            new JoinMetadata()
+            {
+                Description = "Print all information in console",
+                JoinCapabilities = eJoinCapabilities.FromSIMPL,
+                JoinType = eJoinType.Digital
+            });
+
 		#endregion
 
 
-		#region Analog		
-      
-		#endregion
-
+		#region Analog
+		
         [JoinName("Scene")]
         public JoinDataComplete Scene = new JoinDataComplete(
             new JoinData()
@@ -65,6 +77,8 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                 JoinCapabilities = eJoinCapabilities.FromSIMPL,
                 JoinType = eJoinType.Analog
             });
+		#endregion
+
 		#region Serial		
 
         [JoinName("Name")]
@@ -105,20 +119,6 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
             new JoinMetadata()
             {
                 Description = "POST path manually, do not include header or delimeter",
-                JoinCapabilities = eJoinCapabilities.FromSIMPL,
-                JoinType = eJoinType.Serial
-            });
-
-        [JoinName("ApplyScene")]
-        public JoinDataComplete ApplyScene = new JoinDataComplete(
-            new JoinData()
-            {
-                JoinNumber = 3,
-                JoinSpan = 1
-            },
-            new JoinMetadata()
-            {
-                Description = "Serial string paths for ApplyScene (only include path)",
                 JoinCapabilities = eJoinCapabilities.FromSIMPL,
                 JoinType = eJoinType.Serial
             });

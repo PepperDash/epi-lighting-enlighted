@@ -148,9 +148,9 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                 // Device name to bridge
                 trilist.SetString(_joinMap.Name.JoinNumber, Name);                                
                 trilist.SetSigTrueAction(_joinMap.Poll.JoinNumber, SetManualPoll);
+                trilist.SetSigTrueAction(_joinMap.PrintAllInfo.JoinNumber, PrintInformation);
                 trilist.SetStringSigAction(_joinMap.GetCustomPath.JoinNumber, GetCustomPath);
-                trilist.SetStringSigAction(_joinMap.PostCustomPath.JoinNumber, PostCustomPath);
-                trilist.SetStringSigAction(_joinMap.ApplyScene.JoinNumber, SetManualApplyScene);
+                trilist.SetStringSigAction(_joinMap.PostCustomPath.JoinNumber, PostCustomPath);                
                 trilist.SetUShortSigAction(_joinMap.Scene.JoinNumber, SetApplySceneWithId);                
                            
 
@@ -304,25 +304,17 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         }
 
         /// <summary>
-        /// Apply lighting scene, send path as parameter
-        /// </summary>
-        /// <param name="path">Path of URL, requires forward slash prefix</param>
-        public void SetManualApplyScene(string path)
-        {
-            _comms.SendRequest("Post", path, string.Empty);            
-        }     
-
-        /// <summary>
         /// Apply lighting scene using scene ID and virtualSwitchIdentifer
         /// </summary>
         /// <param name="sceneId">Path of URL, requires forward slash prefix</param>
         public void SetApplySceneWithId(ushort sceneId)
         {   
             var dictionaryKeyIndex = "scene" + sceneId;
+            Debug.Console(2, this, Debug.ErrorLogLevel.Error, "SetApplySceneWithIndex: {0}", dictionaryKeyIndex);
             EnlightedLightingSceneIo sceneOjbect;
             var found = _config.SceneDictionary.TryGetValue(dictionaryKeyIndex, out sceneOjbect);
 
-            if (!found) return;
+            if (!found) Debug.Console(2, this, Debug.ErrorLogLevel.Error, "SetApplySceneWithIndex: Variable from SceneDictionary not found");
             var sTemp = string.Format("/ems/api/org/switch/v1/op/applyScene/{0}/{1}?time=0", _config.VirtualSwitchIdentifier, sceneOjbect.SceneId);
             _comms.SendRequest("Post", sTemp, string.Empty);
         }
