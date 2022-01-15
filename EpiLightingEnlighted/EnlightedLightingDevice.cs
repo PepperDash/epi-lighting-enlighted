@@ -37,17 +37,18 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         /// </summary>
         private readonly EnlightedLightingConfig _config;
         private readonly IRestfulComms _comms;
-        private readonly long _pollTimeMs;
-        private readonly long _warningTimeoutMs;
-        private readonly long _errorTimeoutMs;
-        private const long PingInterval = 50000; //50 seconds        
+        //private readonly long _pollTimeMs;
+        //private readonly long _warningTimeoutMs;
+        //private readonly long _errorTimeoutMs;
+        private const long PingInterval = 50000; //50 seconds 
+        private const long OfflineInterval = 120000; //2 minutes 
         private const string GetOrgDetails = "/ems/api/org/company";
         private const string GetAllCampuses = "/ems/api/org/campus/list/1";
         private const string GetAllBuildings = "/ems/api/org/building/list/1";
         private const string GetAllFloors = "/ems/api/org/floor/list";
         private CTimer _pingTimer;
+        private CTimer _offlineTimer;
         private EnlightedLightingBridgeJoinMap _joinMap { get; set; }
-
         public SendLightingApiRequest SendLightingRequest { get; set; }
         public BoolFeedback OnlineFeedback { get; private set; }        
         private bool _deviceOnline;
@@ -76,16 +77,16 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
 	        StartPingTImer(); // Start CTimer
 	        
 	        _config = config;
-	        _pollTimeMs = (config.PollTimeMs > 0) ? config.PollTimeMs : 60000;
-	        _warningTimeoutMs = (config.WarningTimeoutMs > 0) ? config.WarningTimeoutMs : 180000;
-	        _errorTimeoutMs = (config.ErrorTimeoutMs > 0) ? config.ErrorTimeoutMs : 300000;            
+	        //_pollTimeMs = (config.PollTimeMs > 0) ? config.PollTimeMs : 60000;
+	        //_warningTimeoutMs = (config.WarningTimeoutMs > 0) ? config.WarningTimeoutMs : 180000;
+	        //_errorTimeoutMs = (config.ErrorTimeoutMs > 0) ? config.ErrorTimeoutMs : 300000;            
 
 	        // device communications
 	        _comms = client;
 	        if (_comms == null)
 	        {
 	            Debug.Console(0, this, Debug.ErrorLogLevel.Error, "Failed to construct GenericClient using method '{0}'",
-	                config.Control.Method);
+	                _config.Control.Method);
 	            return;
 	        }            
 
@@ -94,7 +95,6 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
             //Taking config values and getting them to the client
             _comms.AuthorizationApiKeyData.ApiKey = config.ApiKey;	        
             _comms.AuthorizationApiKeyData.ApiKeyUsername = config.ApiKeyUsername;
-            _comms.AuthorizationApiKeyData.HeaderUsesApiKey = config.HeaderUsesApiKey;
 
 	        _comms.ResponseReceived += _comms_ResponseReceived;
 
@@ -193,8 +193,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                 //401 is unahtorizied and 403 is forboredden
 
                 ResetPingTimer(); // Reset CTimer with every response
-                _deviceOnline = true;
-                OnlineFeedback.FireUpdate();
+                ResetOfflineTimer(); // Reset CTimer with every response
                 
                 if (string.IsNullOrEmpty(args.ContentString)) return;
 
@@ -315,7 +314,6 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
             {
                 Debug.Console(2, this, Debug.ErrorLogLevel.Error, "SetApplySceneWithIndex: InnerException: {0} Message: {1} StackTrace: {2}", e.InnerException, e.Message, e.StackTrace);
             }
-            
         }
 
         /// <summary>
@@ -333,31 +331,45 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
             _pingTimer.Reset(PingInterval);
         }
 
+        private void ResetOfflineTimer()
+        {
+            _deviceOnline = true;
+            OnlineFeedback.FireUpdate();
+            _offlineTimer.Reset(OfflineInterval);
+        }
+
         private void StartPingTImer()
         {
             StopPingTimer();
+            StopOfflineTimer();
             _pingTimer = new CTimer(PingTimerCallback, null, PingInterval);
+            _offlineTimer = new CTimer(OfflineTimerCallback, null, OfflineInterval);
         }
 
         private void StopPingTimer()
         {
-            if (_pingTimer == null)
-            {
-                return;
-            }
+            if (_pingTimer == null) { return; }
+            _pingTimer.Stop(); _pingTimer.Dispose(); _pingTimer = null;
+        }
 
-            _pingTimer.Stop();
-            _pingTimer.Dispose();
-            _pingTimer = null;
+        private void StopOfflineTimer()
+        {
+            if (_offlineTimer == null) { return; }
+            _offlineTimer.Stop(); _offlineTimer.Dispose(); _offlineTimer = null;
         }
 
         private void PingTimerCallback(object o)
         {
             Debug.Console(1, this, Debug.ErrorLogLevel.Notice, "Ping timer expired");
-            _deviceOnline = false;
-            OnlineFeedback.FireUpdate();
             SetManualPoll();
             StartPingTImer();
+        }
+
+        private void OfflineTimerCallback(object o)
+        {
+            Debug.Console(1, this, Debug.ErrorLogLevel.Notice, "Offline timer expired");
+            _deviceOnline = false;
+            OnlineFeedback.FireUpdate();
         }
 
         private void PrintInformation()

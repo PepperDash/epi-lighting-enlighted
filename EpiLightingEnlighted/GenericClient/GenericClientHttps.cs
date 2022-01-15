@@ -20,6 +20,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         private const string DefaultRequestType = "GET";
         private readonly HttpsClient _client;               
         private readonly CrestronQueue<Action> _requestQueue = new CrestronQueue<Action>(20);
+        private bool HeaderUsesApiKey = true;
         /// <summary>
         /// Custom Authorization with ApiKeyData
         /// </summary>
@@ -125,7 +126,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
             request.Header.SetHeaderValue("Accept", "application/json");
             request.Header.SetHeaderValue("Content-Type", "application/json");
 
-            if (AuthorizationApiKeyData.HeaderUsesApiKey)
+            if (HeaderUsesApiKey)
             {
                 // TimeStamp in Ms
                 var unixTimeStampMs = CurrentMillis.Millis;                

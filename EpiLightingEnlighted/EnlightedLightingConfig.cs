@@ -95,24 +95,6 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         public string ApiKey { get; set; }
 
         /// <summary>
-        /// Determines if HTTPS header uses API key with time stamp
-        /// </summary>
-        /// /// <remarks>
-        /// </remarks>
-        /// <value>
-        /// true/false
-        /// </value>
-        /// <example>
-        /// <code>
-        /// "properties": {
-        ///		"headerUsesApiKey": true
-        /// }
-        /// </code>
-        /// </example>
-        [JsonProperty("headerUsesApiKey")]
-        public bool HeaderUsesApiKey { get; set; }
-
-        /// <summary>
         /// Serializes username as part of HTTPS header
         /// </summary>
         /// <remarks>
