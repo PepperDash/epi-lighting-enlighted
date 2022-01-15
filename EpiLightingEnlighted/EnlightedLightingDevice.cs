@@ -25,17 +25,6 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         {
             _comms = comms;
         }
-
-        /// <summary>
-        /// SIMPL+ method to call a lighting scene
-        /// </summary>
-        /// <param name="path"></param>
-        public void ApplyScene(string path)
-        {                        
-            //_comms.SendRequest(path, null);
-            //Assume case sensitive with requestType
-            _comms.SendRequest("Post", path, string.Empty);
-        }
     }
 
     /// <summary>
@@ -46,13 +35,18 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         /// <summary>
         /// Store the config locally
         /// </summary>
-        private EnlightedLightingConfig _config;
+        private readonly EnlightedLightingConfig _config;
         private readonly IRestfulComms _comms;
         private readonly long _pollTimeMs;
         private readonly long _warningTimeoutMs;
         private readonly long _errorTimeoutMs;
-        private const long PingInterval = 50000; //50 seconds
+        private const long PingInterval = 50000; //50 seconds        
+        private const string GetOrgDetails = "/ems/api/org/company";
+        private const string GetAllCampuses = "/ems/api/org/campus/list/1";
+        private const string GetAllBuildings = "/ems/api/org/building/list/1";
+        private const string GetAllFloors = "/ems/api/org/floor/list";
         private CTimer _pingTimer;
+        private EnlightedLightingBridgeJoinMap _joinMap { get; set; }
 
         public SendLightingApiRequest SendLightingRequest { get; set; }
         public BoolFeedback OnlineFeedback { get; private set; }        
@@ -76,7 +70,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
 	        : base(key, name)
 	    {
 	        Debug.Console(0, this, "Constructing new Enlighted Lighting plugin instance using key: '{0}', name: '{1}'", key,
-	            name);
+	            name);            
 
             OnlineFeedback  = new BoolFeedback(()=> _deviceOnline);
 	        StartPingTImer(); // Start CTimer
@@ -137,35 +131,37 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
 
             try
             {
-                var joinMap = new EnlightedLightingBridgeJoinMap(joinStart);
+                _joinMap = new EnlightedLightingBridgeJoinMap(joinStart);
 
                 // Add the join map to the collection on the bridge if not null
-                if (bridge != null) bridge.AddJoinMap(Key, joinMap);
+                if (bridge != null) bridge.AddJoinMap(Key, _joinMap);
 
                 var customJoins = JoinMapHelper.TryGetJoinMapAdvancedForDevice(joinMapKey);
                 if (customJoins != null)
                 {
-                    joinMap.SetCustomJoinData(customJoins);
+                    _joinMap.SetCustomJoinData(customJoins);
                 }
 
                 Debug.Console(0, this, "Linking to Trilist '{0}'", trilist.ID.ToString("X"));
                 Debug.Console(0, this, "Linking to Bridge Type {0}", GetType().Name);
 
                 // Device name to bridge
-                trilist.SetString(joinMap.Name.JoinNumber, Name);                                
-                trilist.SetSigTrueAction(joinMap.Poll.JoinNumber, SetManualPoll);
-                trilist.SetStringSigAction(joinMap.GetCustomPath.JoinNumber, GetCustomPath);
-                trilist.SetStringSigAction(joinMap.PostCustomPath.JoinNumber, PostCustomPath);
-                trilist.SetStringSigAction(joinMap.ApplyScene.JoinNumber, SetApplyScene);
+                trilist.SetString(_joinMap.Name.JoinNumber, Name);                                
+                trilist.SetSigTrueAction(_joinMap.Poll.JoinNumber, SetManualPoll);
+                trilist.SetStringSigAction(_joinMap.GetCustomPath.JoinNumber, GetCustomPath);
+                trilist.SetStringSigAction(_joinMap.PostCustomPath.JoinNumber, PostCustomPath);
+                trilist.SetStringSigAction(_joinMap.ApplyScene.JoinNumber, SetManualApplyScene);
+                trilist.SetUShortSigAction(_joinMap.Scene.JoinNumber, SetApplySceneWithId);                
+                           
 
                 // Device online status to bridge
-                OnlineFeedback.LinkInputSig(trilist.BooleanInput[joinMap.IsOnline.JoinNumber]);
+                OnlineFeedback.LinkInputSig(trilist.BooleanInput[_joinMap.IsOnline.JoinNumber]);
                 
                 trilist.OnlineStatusChange += (device, args) =>
                 {
                     if (!args.DeviceOnLine) return;
 
-                    trilist.SetString(joinMap.Name.JoinNumber, Name);                  
+                    trilist.SetString(_joinMap.Name.JoinNumber, Name);                  
                 };
             }
             catch (Exception e)
@@ -311,9 +307,24 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         /// Apply lighting scene, send path as parameter
         /// </summary>
         /// <param name="path">Path of URL, requires forward slash prefix</param>
-        public void SetApplyScene(string path)
+        public void SetManualApplyScene(string path)
         {
-            _comms.SendRequest("Post", path, null);            
+            _comms.SendRequest("Post", path, string.Empty);            
+        }     
+
+        /// <summary>
+        /// Apply lighting scene using scene ID and virtualSwitchIdentifer
+        /// </summary>
+        /// <param name="sceneId">Path of URL, requires forward slash prefix</param>
+        public void SetApplySceneWithId(ushort sceneId)
+        {   
+            var dictionaryKeyIndex = "scene" + sceneId;
+            EnlightedLightingSceneIo sceneOjbect;
+            var found = _config.SceneDictionary.TryGetValue(dictionaryKeyIndex, out sceneOjbect);
+
+            if (!found) return;
+            var sTemp = string.Format("/ems/api/org/switch/v1/op/applyScene/{0}/{1}?time=0", _config.VirtualSwitchIdentifier, sceneOjbect.SceneId);
+            _comms.SendRequest("Post", sTemp, string.Empty);
         }
 
         private void ResetPingTimer()
@@ -347,9 +358,12 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
             OnlineFeedback.FireUpdate();
         }
 
-        private void RequestStartupInfo()
+        private void PrintInformation()
         {
-            // Use the 'Get all floors' command to retrieve floor IDs -  "/ems/api/org/floor/list"
+            GetCustomPath(GetOrgDetails);
+            GetCustomPath(GetAllCampuses);
+            GetCustomPath(GetAllBuildings);
+            GetCustomPath(GetAllFloors);            
             // Use the 'Get Switch Groups' command to retrieve Switch IDs based on switch names - "/ems/api/org/switchgroups/list/{property}/{pid}"
             // Use the 'Get Switch Scenes' command to retrieve scene IDs for each switch - "/ems/api/org/switch/v1/getSwitchScenes/{floor_id}/{switch_name}"
         }

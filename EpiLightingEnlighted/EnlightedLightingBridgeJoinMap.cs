@@ -52,7 +52,19 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
       
 		#endregion
 
-
+        [JoinName("Scene")]
+        public JoinDataComplete Scene = new JoinDataComplete(
+            new JoinData()
+            {
+                JoinNumber = 1,
+                JoinSpan = 1
+            },
+            new JoinMetadata()
+            {
+                Description = "Recall scene",
+                JoinCapabilities = eJoinCapabilities.FromSIMPL,
+                JoinType = eJoinType.Analog
+            });
 		#region Serial		
 
         [JoinName("Name")]

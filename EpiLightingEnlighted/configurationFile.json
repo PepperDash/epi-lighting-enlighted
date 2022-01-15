@@ -35,31 +35,25 @@
           "apiKey": "a48701735877108d3585b910a74352066b474414",
           "apiKeyUsername": "jarndt",
           "headerUsesApiKey": true,
-          "presets": {
-            "comment": {
-              "name": "Touch panel name given for each preset",
-              "path": "REST API applyScene path",
-              "pathExample": "/ems/api/org/switch/v1/op/applyScene/{switch_id}/{scene_id}?time=60"
+          "virtualSwitchIdentifier": "10",
+          "scenes": {
+            "scene1": {
+              "sceneId": 31
             },
-            "preset1": {
-              "name": "Bright",
-              "path": "/ems/api/org/switch/v1/op/applyScene/11/1?time=0"
+            "scene2": {
+              "sceneId": 32
             },
-            "preset2": {
-              "name": "Medium",
-              "path": "/ems/api/org/switch/v1/op/applyScene/11/2?time=0"
+            "scene3": {
+              "sceneId": 33
             },
-            "preset3": {
-              "name": "Mid-Low",
-              "path": "/ems/api/org/switch/v1/op/applyScene/11/3?time=0"
+            "scene4": {
+              "sceneId": 34
             },
-            "preset4": {
-              "name": "Low",
-              "path": "/ems/api/org/switch/v1/op/applyScene/11/4?time=0"
+            "scene5": {
+              "sceneId": 35
             },
-            "preset5": {
-              "name": "Off",
-              "path": "/ems/api/org/switch/v1/op/applyScene/11/5?time=0"
+            "scene6": {
+              "sceneId": 26
             }
           }
         }

@@ -131,36 +131,48 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         [JsonProperty("apiKeyUsername")]
         public string ApiKeyUsername { get; set; }
 
+        [JsonProperty("virtualSwitchIdentifier")]
+        public ushort VirtualSwitchIdentifier { get; set; }
+        
+
 		/// <summary>
-		/// Example dictionary of objects
+		/// Dictionary of objects
 		/// </summary>
 		/// <remarks>
-		/// This is an example collection configuration object.  This should be modified or deleted as needed for the plugin being built.
 		/// </remarks>
 		/// <example>
 		/// <code>
 		/// "properties": {
-		///		"presets": {
-		///			"preset1": {
-		///				"enabled": true,
-		///				"name": "Preset 1"
-		///			}
-		///		}
+        ///     "scene1": {
+        ///         "sceneId": 31,
+        ///         "name": ""
+        ///     },
+        ///     "scene2": {
+        ///         "sceneId": 32,
+        ///         "name": ""
+        ///     },
+        ///     "scene3": {
+        ///         "sceneId": 22,
+        ///         "name": ""
+        ///     },
+        ///     "scene4": {
+        ///         "sceneId": 0,
+        ///         "name": ""
+        ///     },
+        ///     "scene5": {
+        ///         "sceneId": 0,
+        ///         "name": ""
+        ///     },
+        ///     "scene6": {
+        ///         "sceneId": 0,
+        ///         "name": ""
+        ///     }
+        ///   }
 		/// }
 		/// </code>
 		/// </example>
-		/// <example>
-		/// <code>
-		/// "properties": {
-		///		"inputNames": {
-		///			"input1": "Input 1",
-		///			"input2": "Input 2"		
-		///		}
-		/// }
-		/// </code>
-		/// </example>
-		[JsonProperty("DeviceDictionary")]
-		public Dictionary<string, EnlightedLightingIo> DeviceDictionary { get; set; }
+		[JsonProperty("scenes")]
+        public Dictionary<string, EnlightedLightingSceneIo> SceneDictionary { get; set; }
 
 		/// <summary>
 		/// Constuctor
@@ -171,14 +183,14 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
 		/// </remarks>
 		public EnlightedLightingConfig()
 		{
-			DeviceDictionary = new Dictionary<string, EnlightedLightingIo>();
+            SceneDictionary = new Dictionary<string, EnlightedLightingSceneIo>();
 		}
 	}
 
     /// <summary>
     /// Enlighted lighting IO configuration object
     /// </summary>
-	public class EnlightedLightingIo
+	public class EnlightedLightingSceneIo
 	{
 		/// <summary>
 		/// Serializes collection name property
@@ -195,16 +207,16 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
 		/// <remarks>
 		/// This is an example collection of configuration objects.  This can be modified or deleted as needed for the plugin being built.
 		/// </remarks>
-		[JsonProperty("id")]
-		public string Id { get; set; }
+        [JsonProperty("sceneId")]
+		public uint SceneId { get; set; }
 
-                /// <summary>
+        /// <summary>
         /// Constructor
         /// </summary>
-        public EnlightedLightingIo()
+        public EnlightedLightingSceneIo()
         {
             Name = "";
-            Id = "";
+            SceneId = 0;
         }
 	}
 }
