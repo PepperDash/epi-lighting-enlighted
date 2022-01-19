@@ -12,7 +12,7 @@
     <license type="expression">MIT</license>
     <!-- Update projectUrl with the actual URL of the plugin repo-->
     <projectUrl>https://github.com/PepperDash/epi-lighting-enlighted</projectUrl>
-    <copyright>Copyright 2021</copyright>
+    <copyright>Copyright 2022</copyright>
     <!-- Update description-->
     <description>Enlighted Lighting Plugin used with PepperDash Essentials to expose functionality in SIMPL Windows programs using Bridges.</description>
     <tags>crestron 3series 4series enlighted lighting</tags>
