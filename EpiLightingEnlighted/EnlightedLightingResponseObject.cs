@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace PepperDash.Essentials.Plugin.EnlightedLighting
 {
-    // Classes below were converted using http://json2csharp.com/	
+    // Classes below converted using http://json2csharp.com/	
 
     /// <summary>
     /// Response device

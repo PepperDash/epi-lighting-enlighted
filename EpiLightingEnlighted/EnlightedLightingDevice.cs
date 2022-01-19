@@ -1,15 +1,15 @@
 ﻿using System;
 using PepperDash.Core;
 using Newtonsoft.Json;
+using Crestron.SimplSharp;
 using PepperDash.Essentials.Core;
 using PepperDash.Essentials.Core.Bridges;
 using Crestron.SimplSharpPro.DeviceSupport;
 
 namespace PepperDash.Essentials.Plugin.EnlightedLighting
 {
-    //Would be smart to print out paths being sent to confirm the slashes are needed or not
-
-    //Make a public class of functions to send paths or requests
+    
+    // Public class of functions to send paths or requests
     public class SendLightingApiRequest
     {        
         /// <summary>
@@ -25,13 +25,6 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         {
             _comms = comms;
         }
-
-        public void ApplyScene(string path)
-        {                        
-            //_comms.SendRequest(path, null);
-            //Assume case sensitive with requestType
-            _comms.SendRequest("Post", path, null);
-        }
     }
 
     /// <summary>
@@ -42,16 +35,23 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         /// <summary>
         /// Store the config locally
         /// </summary>
-        private EnlightedLightingConfig _config;
+        private readonly EnlightedLightingConfig _config;
         private readonly IRestfulComms _comms;
-        private readonly long _pollTimeMs;
-        private readonly long _warningTimeoutMs;
-        private readonly long _errorTimeoutMs;
-
+        //private readonly long _pollTimeMs;
+        //private readonly long _warningTimeoutMs;
+        //private readonly long _errorTimeoutMs;
+        private const long PingInterval = 50000; //50 seconds 
+        private const long OfflineInterval = 120000; //2 minutes 
+        private const string GetOrgDetails = "/ems/api/org/company";
+        private const string GetAllCampuses = "/ems/api/org/campus/list/1";
+        private const string GetAllBuildings = "/ems/api/org/building/list/1";
+        private const string GetAllFloors = "/ems/api/org/floor/list";
+        private CTimer _pingTimer;
+        private CTimer _offlineTimer;
+        private EnlightedLightingBridgeJoinMap _joinMap { get; set; }
         public SendLightingApiRequest SendLightingRequest { get; set; }
-
-        public BoolFeedback OnlineFeedback { get; private set; }
-        //public IntFeedback StatusFeedback { get; private set; }
+        public BoolFeedback OnlineFeedback { get; private set; }        
+        private bool _deviceOnline;
 
         /// <summary>
         /// Tracks name debugging state
@@ -71,28 +71,30 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
 	        : base(key, name)
 	    {
 	        Debug.Console(0, this, "Constructing new Enlighted Lighting plugin instance using key: '{0}', name: '{1}'", key,
-	            name);
+	            name);            
+
+            OnlineFeedback  = new BoolFeedback(()=> _deviceOnline);
+	        StartPingTImer(); // Start CTimer
 	        
 	        _config = config;
-	        _pollTimeMs = (config.PollTimeMs > 0) ? config.PollTimeMs : 60000;
-	        _warningTimeoutMs = (config.WarningTimeoutMs > 0) ? config.WarningTimeoutMs : 180000;
-	        _errorTimeoutMs = (config.ErrorTimeoutMs > 0) ? config.ErrorTimeoutMs : 300000;            
+	        //_pollTimeMs = (config.PollTimeMs > 0) ? config.PollTimeMs : 60000;
+	        //_warningTimeoutMs = (config.WarningTimeoutMs > 0) ? config.WarningTimeoutMs : 180000;
+	        //_errorTimeoutMs = (config.ErrorTimeoutMs > 0) ? config.ErrorTimeoutMs : 300000;            
 
 	        // device communications
 	        _comms = client;
 	        if (_comms == null)
 	        {
 	            Debug.Console(0, this, Debug.ErrorLogLevel.Error, "Failed to construct GenericClient using method '{0}'",
-	                config.Control.Method);
+	                _config.Control.Method);
 	            return;
 	        }            
 
             SendLightingRequest = new SendLightingApiRequest(_comms);
 
             //Taking config values and getting them to the client
-	        client.AuthorizationApiKeyData.ApiKey = config.ApiKey;
-            client.AuthorizationApiKeyData.ApiKeyUsername = config.ApiKeyUsername;
-            client.AuthorizationApiKeyData.HeaderUsesApiKey = config.HeaderUsesApiKey;
+            _comms.AuthorizationApiKeyData.ApiKey = config.ApiKey;	        
+            _comms.AuthorizationApiKeyData.ApiKeyUsername = config.ApiKeyUsername;
 
 	        _comms.ResponseReceived += _comms_ResponseReceived;
 
@@ -129,38 +131,36 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
 
             try
             {
-                var joinMap = new EnlightedLightingBridgeJoinMap(joinStart);
+                _joinMap = new EnlightedLightingBridgeJoinMap(joinStart);
 
-                // This adds the join map to the collection on the bridge IF not null
-                if (bridge != null) bridge.AddJoinMap(Key, joinMap);
+                // Add the join map to the collection on the bridge if not null
+                if (bridge != null) bridge.AddJoinMap(Key, _joinMap);
 
                 var customJoins = JoinMapHelper.TryGetJoinMapAdvancedForDevice(joinMapKey);
                 if (customJoins != null)
                 {
-                    joinMap.SetCustomJoinData(customJoins);
+                    _joinMap.SetCustomJoinData(customJoins);
                 }
 
                 Debug.Console(0, this, "Linking to Trilist '{0}'", trilist.ID.ToString("X"));
                 Debug.Console(0, this, "Linking to Bridge Type {0}", GetType().Name);
 
-                // device name to bridge
-                trilist.SetString(joinMap.Name.JoinNumber, Name);                                
-                trilist.SetSigTrueAction(joinMap.Poll.JoinNumber, SetManualPoll);
-                trilist.SetStringSigAction(joinMap.ManualCommand.JoinNumber, SetManualCommand);
-                trilist.SetStringSigAction(joinMap.ApplyScene.JoinNumber, SetApplyScene);
+                // Device name to bridge
+                trilist.SetString(_joinMap.Name.JoinNumber, Name);
+                trilist.SetSigTrueAction(_joinMap.PrintAllInfo.JoinNumber, PrintInformation);
+                trilist.SetStringSigAction(_joinMap.GetCustomPath.JoinNumber, GetCustomPath);
+                trilist.SetStringSigAction(_joinMap.PostCustomPath.JoinNumber, PostCustomPath);                
+                trilist.SetUShortSigAction(_joinMap.Scene.JoinNumber, SetApplySceneWithId);                
+                           
 
-                // device online status to bridge
-                OnlineFeedback.LinkInputSig(trilist.BooleanInput[joinMap.IsOnline.JoinNumber]);
-                //StatusFeedback.LinkInputSig(trilist.UShortInput[joinMap.Status.JoinNumber]);
-
-                // bridge online status 
-                // during testing this will never go high
+                // Device online status to bridge
+                OnlineFeedback.LinkInputSig(trilist.BooleanInput[_joinMap.IsOnline.JoinNumber]);
                 
                 trilist.OnlineStatusChange += (device, args) =>
                 {
                     if (!args.DeviceOnLine) return;
 
-                    trilist.SetString(joinMap.Name.JoinNumber, Name);                  
+                    trilist.SetString(_joinMap.Name.JoinNumber, Name);                  
                 };
             }
             catch (Exception e)
@@ -178,29 +178,59 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         /// <param name="state"></param>
         public void SetExtendedDebuggingState(bool state)
         {
-            ExtendedDebuggingState = state;
-            Debug.Console(0, this, "Extended Debugging: {0}", ExtendedDebuggingState ? "On" : "Off");
+            //ExtendedDebuggingState = state;
+            Debug.Console(0, this, "Extended Debugging: {0}", state ? "On" : "Off");
         }
 
         private void _comms_ResponseReceived(object sender, GenericClientResponseEventArgs args)
         {
             try
             {
-                Debug.Console(1, this, "Respone Code: {0}", args.Code);
-                Debug.Console(0, this, "Response URL: {0}", args.ResponseUrl);
+                Debug.Console(1, this, "Response Code: {0}", args.Code);
+                Debug.Console(1, this, "Response URL: {0}", args.ResponseUrl);
                 //If we get response.code 200 then parse
                 //Perahps some will help you know if your AUTH failed or if other things fail! Make it helpful.
                 //401 is unahtorizied and 403 is forboredden
+
+                ResetPingTimer(); // Reset CTimer with every response
+                ResetOfflineTimer(); // Reset CTimer with every response
                 
                 if (string.IsNullOrEmpty(args.ContentString)) return;
 
-                if (args.Code != 200) return;
-                if (args.ResponseUrl.Contains("applyScene"))
-                {                   
-                    var obj = JsonConvert.DeserializeObject<EnlightedLightingResponseStatus>(args.ContentString);
-                    if (obj != null)
-                        ParseStatusResponse(obj);
+                switch (args.Code)
+                {
+                    case 200: // Ok, valid response, request successful
+                        return;                        
+                    case 302:
+                        Debug.Console(1, this, Debug.ErrorLogLevel.Error, "Moved temporarily, user not authenticated, URL redirection");
+                        break;
+                    case 401:
+                        Debug.Console(1, this, Debug.ErrorLogLevel.Error, "Request not completed, lacks valid authentication credentials for requested resource");
+                        break;
+                    case 403:
+                        Debug.Console(1, this, Debug.ErrorLogLevel.Error, "Request forbidden, permission denied, no access to the user");
+                        break;
+                    case 404:
+                        Debug.Console(1, this, Debug.ErrorLogLevel.Error, "API not valid or not found");
+                        break;
+                    case 405:
+                        Debug.Console(1, this, Debug.ErrorLogLevel.Error, "Method not allowed: Server understood request but method not supported by target resource");
+                        break;
+                    case 406:
+                        Debug.Console(1, this, Debug.ErrorLogLevel.Error, "Not acceptable, server cannot produce response from given request");
+                        break;
+                    case 407:
+                        Debug.Console(1, this, Debug.ErrorLogLevel.Error, "Request not applied, lacks valid authentication credentials for proxy server between browser and server to access requested resource");
+                        break;
+                    case 408:
+                        Debug.Console(1, this, Debug.ErrorLogLevel.Error, "API received after time expired, API canceled");
+                        break;
                 }
+
+                if (!args.ResponseUrl.Contains("applyScene")) return;
+                var obj = JsonConvert.DeserializeObject<EnlightedLightingResponseStatus>(args.ContentString);
+                if (obj != null)
+                    ParseStatusResponse(obj);
             }
             catch (Exception e)
             {
@@ -228,7 +258,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                 // the last scene called, only the lighting levels per load which we are not interested in parsing or saving.
                 // Since the response is already being printed into console if/when debug is active we get the status response
                 // and can view the status via the API with no need to print it here.
-                Debug.Console(1, this, Debug.ErrorLogLevel.None, "Reponse from HTTPS:  {0}", responseObj);
+                Debug.Console(1, this, Debug.ErrorLogLevel.None, "Reponse from device:  {0}", responseObj);                
             }
             catch (Exception e)
             {
@@ -242,42 +272,114 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         /// Send text to device
         /// </summary>
         /// <param name="cmd">Path to send to device</param>
-        public void SendText(string cmd)
+        public void PostCustomPath(string cmd)
         {
             if (string.IsNullOrEmpty(cmd))
                 return;
 
-            if (_comms != null) _comms.SendRequest(cmd, string.Empty);
+            if (_comms != null) _comms.SendRequest("Post", cmd, string.Empty);
         }
 
         /// <summary>
-        /// Sent custom command using GET response type
+        /// Send custom command using GET request type
         /// </summary>
         /// <param name="cmd">Path of custom command</param>
-        public void SetManualCommand(string cmd)
+        public void GetCustomPath(string cmd)
         {
             if (string.IsNullOrEmpty(cmd))
                 return;
 
-            if (_comms != null) _comms.SendRequest(cmd, string.Empty);
+            if (_comms != null) _comms.SendRequest("Get", cmd, string.Empty);
         }
 
         /// <summary>
-        /// Trigger SendText method to Manually poll device version
+        /// Apply lighting scene using scene ID and virtualSwitchIdentifer
+        /// </summary>
+        /// <param name="sceneId">Path of URL, requires forward slash prefix</param>
+        public void SetApplySceneWithId(ushort sceneId)
+        {
+            try
+            {
+                var dictionaryKeyIndex = "scene" + sceneId;
+                Debug.Console(2, this, Debug.ErrorLogLevel.Error, "SetApplySceneWithIndex: {0}", dictionaryKeyIndex);
+                EnlightedLightingSceneIo sceneOjbect;
+                var found = _config.SceneDictionary.TryGetValue(dictionaryKeyIndex, out sceneOjbect);
+
+                if (!found) Debug.Console(2, this, Debug.ErrorLogLevel.Error, "SetApplySceneWithIndex: Variable from SceneDictionary not found");
+                if (sceneId == 0) { return; }
+                var sTemp = string.Format("/ems/api/org/switch/v1/op/applyScene/{0}/{1}?time=0", _config.VirtualSwitchIdentifier, sceneOjbect.SceneId);
+                _comms.SendRequest("Post", sTemp, string.Empty);
+            }
+            catch (Exception e)
+            {
+                Debug.Console(2, this, Debug.ErrorLogLevel.Error, "SetApplySceneWithIndex: InnerException: {0} Message: {1} StackTrace: {2}", e.InnerException, e.Message, e.StackTrace);
+            }
+        }
+
+        /// <summary>
+        /// Manually poll device using SendRequest method
         /// </summary>
         public void SetManualPoll()
         {
             //Custom command used to poll device
-            _comms.SendRequest("Get", "/ems/api/org/em/v1/energy", null);
+            _comms.SendRequest("Get", "/ems/api/org/em/v1/energy", string.Empty);
         }
 
-        /// <summary>
-        /// Apply lighting scene, send path as parameter
-        /// </summary>
-        /// <param name="path">Path of URL, requires forward slash prefix</param>
-        public void SetApplyScene(string path)
+        private void ResetPingTimer()
         {
-            _comms.SendRequest("Post", path, null);            
+            // This tells us we're online with the API and getting pings
+            _pingTimer.Reset(PingInterval);
+        }
+
+        private void ResetOfflineTimer()
+        {
+            _deviceOnline = true;
+            OnlineFeedback.FireUpdate();
+            _offlineTimer.Reset(OfflineInterval);
+        }
+
+        private void StartPingTImer()
+        {
+            StopPingTimer();
+            StopOfflineTimer();
+            _pingTimer = new CTimer(PingTimerCallback, null, PingInterval);
+            _offlineTimer = new CTimer(OfflineTimerCallback, null, OfflineInterval);
+        }
+
+        private void StopPingTimer()
+        {
+            if (_pingTimer == null) { return; }
+            _pingTimer.Stop(); _pingTimer.Dispose(); _pingTimer = null;
+        }
+
+        private void StopOfflineTimer()
+        {
+            if (_offlineTimer == null) { return; }
+            _offlineTimer.Stop(); _offlineTimer.Dispose(); _offlineTimer = null;
+        }
+
+        private void PingTimerCallback(object o)
+        {
+            Debug.Console(1, this, Debug.ErrorLogLevel.Notice, "Ping timer expired");
+            SetManualPoll();
+            StartPingTImer();
+        }
+
+        private void OfflineTimerCallback(object o)
+        {
+            Debug.Console(1, this, Debug.ErrorLogLevel.Notice, "Offline timer expired");
+            _deviceOnline = false;
+            OnlineFeedback.FireUpdate();
+        }
+
+        private void PrintInformation()
+        {
+            GetCustomPath(GetOrgDetails);
+            GetCustomPath(GetAllCampuses);
+            GetCustomPath(GetAllBuildings);
+            GetCustomPath(GetAllFloors);            
+            // Use the 'Get Switch Groups' command to retrieve Switch IDs based on switch names - "/ems/api/org/switchgroups/list/{property}/{pid}"
+            // Use the 'Get Switch Scenes' command to retrieve scene IDs for each switch - "/ems/api/org/switch/v1/getSwitchScenes/{floor_id}/{switch_name}"
         }
     }   
 }

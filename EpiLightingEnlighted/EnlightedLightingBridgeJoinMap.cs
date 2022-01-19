@@ -15,7 +15,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
 	public class EnlightedLightingBridgeJoinMap : JoinMapBaseAdvanced
 	{
 
-		#region Digital	
+		#region Digital
 
         [JoinName("IsOnline")]
         public JoinDataComplete IsOnline = new JoinDataComplete(
@@ -31,8 +31,8 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                 JoinType = eJoinType.Digital
             });
 
-        [JoinName("Poll")]
-        public JoinDataComplete Poll = new JoinDataComplete(
+        [JoinName("PrintAllInfo")]
+        public JoinDataComplete PrintAllInfo = new JoinDataComplete(
             new JoinData()
             {
                 JoinNumber = 1,
@@ -40,20 +40,31 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
             },
             new JoinMetadata()
             {
-                Description = "Manual Poll Device",
+                Description = "Print all information in console",
                 JoinCapabilities = eJoinCapabilities.FromSIMPL,
                 JoinType = eJoinType.Digital
             });
 
 		#endregion
 
-
-		#region Analog		
-      
+		#region Analog
+		
+        [JoinName("Scene")]
+        public JoinDataComplete Scene = new JoinDataComplete(
+            new JoinData()
+            {
+                JoinNumber = 1,
+                JoinSpan = 1
+            },
+            new JoinMetadata()
+            {
+                Description = "Recall scene",
+                JoinCapabilities = eJoinCapabilities.FromSIMPL,
+                JoinType = eJoinType.Analog
+            });
 		#endregion
 
-
-		#region Serial		
+		#region Serial
 
         [JoinName("Name")]
         public JoinDataComplete Name = new JoinDataComplete(
@@ -69,8 +80,22 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                 JoinType = eJoinType.Serial
             });
 
-        [JoinName("ManualCommand")]
-        public JoinDataComplete ManualCommand = new JoinDataComplete(
+        [JoinName("GetCustomPath")]
+        public JoinDataComplete GetCustomPath = new JoinDataComplete(
+            new JoinData()
+            {
+                JoinNumber = 1,
+                JoinSpan = 1
+            },
+            new JoinMetadata()
+            {
+                Description = "GET path manually, do not include header or delimeter",
+                JoinCapabilities = eJoinCapabilities.FromSIMPL,
+                JoinType = eJoinType.Serial
+            });
+
+        [JoinName("PostCustomPath")]
+        public JoinDataComplete PostCustomPath = new JoinDataComplete(
             new JoinData()
             {
                 JoinNumber = 2,
@@ -78,21 +103,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
             },
             new JoinMetadata()
             {
-                Description = "Send command path manually (do not include header or delimeter)",
-                JoinCapabilities = eJoinCapabilities.FromSIMPL,
-                JoinType = eJoinType.Serial
-            });
-
-        [JoinName("ApplyScene")]
-        public JoinDataComplete ApplyScene = new JoinDataComplete(
-            new JoinData()
-            {
-                JoinNumber = 3,
-                JoinSpan = 1
-            },
-            new JoinMetadata()
-            {
-                Description = "Serial string paths for ApplyScene (only include path)",
+                Description = "POST path manually, do not include header or delimeter",
                 JoinCapabilities = eJoinCapabilities.FromSIMPL,
                 JoinType = eJoinType.Serial
             });
