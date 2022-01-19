@@ -34,7 +34,6 @@
           "errorTimeoutMs": 180000,
           "apiKey": "a48701735877108d3585b910a74352066b474414",
           "apiKeyUsername": "jarndt",
-          "headerUsesApiKey": true,
           "virtualSwitchIdentifier": "10",
           "scenes": {
             "scene1": {
