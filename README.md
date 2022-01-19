@@ -12,54 +12,49 @@ This repo contains a plugin for use with [PepperDash Essentials](https://github.
 
 ```json
 {
-      "key": "lighting-1",
-      "uid": 1,
-      "name": "Enlighted Energy Manager (EM)",
-      "type": "enlightedlighting",
-      "group": "plugin",
-      "parentDeviceKey": "processor",
-      "properties": {
+        "key": "lighting-1",
+        "uid": 1,
+        "name": "Enlighted Energy Manager (EM)",
+        "type": "enlightedlighting",
+        "group": "plugin",
+        "parentDeviceKey": "processor",
+        "properties": {
           "control": {
-              "method": "https",
-              "tcpSshProperties": {
-                  "address": "0.0.0.0",
-                  "port": 443
-              }
+            "method": "https",
+            "tcpSshProperties": {
+              "address": "lighting.server.com",
+              "port": 443
+            }
           },
           "pollTimeMs": 60000,
           "warningTimeoutMs": 120000,
           "errorTimeoutMs": 180000,
-          "apiKey": "74deac09af03dab85468b91ab7c12273cfc37dfc",
+          "apiKey": "97987asdfasdf923098248702938423423lkjwe",
           "apiKeyUsername": "crestron",
-          "presets": {
-              "comment": {
-              "name": "Touch panel name given for each preset",
-              "path": "REST API applyScene path",
-              "pathExample": "/ems/api/org/switch/v1/op/applyScene/{switch_id}/{scene_id}?time=60"
-              },
-              "preset1": {
-                  "name": "Bright",
-                  "path": "/ems/api/org/switch/v1/op/applyScene/11/1?time=0"
-              },
-              "preset2": {
-                  "name": "Medium",
-                  "path": "/ems/api/org/switch/v1/op/applyScene/11/2?time=0"
-              },
-              "preset3": {
-                  "name": "Mid-Low",
-                  "path": "/ems/api/org/switch/v1/op/applyScene/11/3?time=0"
-              },
-              "preset4": {
-                  "name": "Low",
-                  "path": "/ems/api/org/switch/v1/op/applyScene/11/4?time=0"
-              },
-              "preset5": {
-                  "name": "Off",
-                  "path": "/ems/api/org/switch/v1/op/applyScene/11/5?time=0"
-              }
-          }                  
+          "headerUsesApiKey": true,
+          "virtualSwitchIdentifier": "10",
+          "scenes": {
+            "scene1": {
+              "sceneId": 31
+            },
+            "scene2": {
+              "sceneId": 32
+            },
+            "scene3": {
+              "sceneId": 33
+            },
+            "scene4": {
+              "sceneId": 34
+            },
+            "scene5": {
+              "sceneId": 35
+            },
+            "scene6": {
+              "sceneId": 26
+            }
+          }
+        }
       }
-  }
 ```
 For more configuration information, see the [PepperDash Essentials wiki](https://github.com/PepperDash/Essentials/wiki).
 
