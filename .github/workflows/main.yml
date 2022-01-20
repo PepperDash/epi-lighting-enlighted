@@ -119,7 +119,7 @@ jobs:
       - name: Add nuget.org API Key
         run: nuget setApiKey ${{ secrets.NUGET_API_KEY }}
       - name: Create nuget package
-        run: nuget pack "./PepperDash.Essentials.Plugin.EnlightedLighting.nuspec" -version ${{ env.VERSION }}
+        run: nuget pack "./${{ env.SOLUTION_FILE}}.nuspec" -version ${{ env.VERSION }}
       - name: Publish nuget package to Github registry
         run: nuget push **/*.nupkg -source github
       - name: Publish nuget package to nuget.org
