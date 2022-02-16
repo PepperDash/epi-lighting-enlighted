@@ -46,17 +46,13 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         private const string GetAllCampuses = "/ems/api/org/campus/list/1";
         private const string GetAllBuildings = "/ems/api/org/building/list/1";
         private const string GetAllFloors = "/ems/api/org/floor/list";
+        public const int MaxIo = 6;
         private CTimer _pingTimer;
         private CTimer _offlineTimer;
         private EnlightedLightingBridgeJoinMap _joinMap { get; set; }
         public SendLightingApiRequest SendLightingRequest { get; set; }
         public BoolFeedback OnlineFeedback { get; private set; }        
-        private bool _deviceOnline;
-
-        /// <summary>
-        /// Tracks name debugging state
-        /// </summary>
-        public bool ExtendedDebuggingState;
+        private bool _deviceOnline;        
 
 	    #region Device Constructor
 
@@ -70,7 +66,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
 	    public EnlightedLightingDevice(string key, string name, EnlightedLightingConfig config, IRestfulComms client)
 	        : base(key, name)
 	    {
-	        Debug.Console(0, this, "Constructing new Enlighted Lighting plugin instance using key: '{0}', name: '{1}'", key,
+	        Debug.Console(1, this, "Constructing new Enlighted Lighting plugin instance using key: '{0}', name: '{1}'", key,
 	            name);            
 
             OnlineFeedback  = new BoolFeedback(()=> _deviceOnline);
@@ -103,7 +99,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
 	        //OnlineFeedback = new BoolFeedback(() => true);	// false > _commsMonitor.IsOnline
 	        //StatusFeedback = new IntFeedback(() => 2);		// 0 > (int)_commsMonitor.Status
 
-	        Debug.Console(0, "{0}", new String('-', 100));
+	        Debug.Console(1, "{0}", new String('-', 100));
 	    }
 	    #endregion
 
@@ -147,11 +143,12 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
 
                 // Device name to bridge
                 trilist.SetString(_joinMap.Name.JoinNumber, Name);
-                trilist.SetSigTrueAction(_joinMap.PrintAllInfo.JoinNumber, PrintInformation);
-                trilist.SetStringSigAction(_joinMap.GetCustomPath.JoinNumber, GetCustomPath);
-                trilist.SetStringSigAction(_joinMap.PostCustomPath.JoinNumber, PostCustomPath);                
-                trilist.SetUShortSigAction(_joinMap.Scene.JoinNumber, SetApplySceneWithId);                
-                           
+                trilist.SetSigTrueAction(_joinMap.Scene.JoinNumber, RecallScene01);
+                trilist.SetSigTrueAction(_joinMap.Scene.JoinNumber + 1, RecallScene02);
+                trilist.SetSigTrueAction(_joinMap.Scene.JoinNumber + 2, RecallScene03);
+                trilist.SetSigTrueAction(_joinMap.Scene.JoinNumber + 3, RecallScene04);
+                trilist.SetSigTrueAction(_joinMap.Scene.JoinNumber + 4, RecallScene05);
+                trilist.SetSigTrueAction(_joinMap.Scene.JoinNumber + 5, RecallScene06);                           
 
                 // Device online status to bridge
                 OnlineFeedback.LinkInputSig(trilist.BooleanInput[_joinMap.IsOnline.JoinNumber]);
@@ -176,7 +173,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         /// Sets name debugging state
         /// </summary>
         /// <param name="state"></param>
-        public void SetExtendedDebuggingState(bool state)
+        private void SetExtendedDebuggingState(bool state)
         {
             //ExtendedDebuggingState = state;
             Debug.Console(0, this, "Extended Debugging: {0}", state ? "On" : "Off");
@@ -269,7 +266,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         }
 
         /// <summary>
-        /// Send text to device
+        /// Send text to device using POST request type
         /// </summary>
         /// <param name="cmd">Path to send to device</param>
         public void PostCustomPath(string cmd)
@@ -281,7 +278,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         }
 
         /// <summary>
-        /// Send custom command using GET request type
+        /// Send text to device using GET request type
         /// </summary>
         /// <param name="cmd">Path of custom command</param>
         public void GetCustomPath(string cmd)
@@ -293,21 +290,13 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         }
 
         /// <summary>
-        /// Apply lighting scene using scene ID and virtualSwitchIdentifer
+        /// Apply lighting scene using virtualSwitchIdentifer
         /// </summary>
-        /// <param name="sceneId">Path of URL, requires forward slash prefix</param>
-        public void SetApplySceneWithId(ushort sceneId)
+        public void RecallScene01()
         {
             try
             {
-                var dictionaryKeyIndex = "scene" + sceneId;
-                Debug.Console(2, this, Debug.ErrorLogLevel.Error, "SetApplySceneWithIndex: {0}", dictionaryKeyIndex);
-                EnlightedLightingSceneIo sceneOjbect;
-                var found = _config.SceneDictionary.TryGetValue(dictionaryKeyIndex, out sceneOjbect);
-
-                if (!found) Debug.Console(2, this, Debug.ErrorLogLevel.Error, "SetApplySceneWithIndex: Variable from SceneDictionary not found");
-                if (sceneId == 0) { return; }
-                var sTemp = string.Format("/ems/api/org/switch/v1/op/applyScene/{0}/{1}?time=0", _config.VirtualSwitchIdentifier, sceneOjbect.SceneId);
+                var sTemp = string.Format("/ems/api/org/switch/v1/op/applyScene/{0}/scene1?time=0", _config.VirtualSwitchIdentifier);
                 _comms.SendRequest("Post", sTemp, string.Empty);
             }
             catch (Exception e)
@@ -317,9 +306,89 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         }
 
         /// <summary>
+        /// Apply lighting scene using virtualSwitchIdentifer
+        /// </summary>
+        public void RecallScene02()
+        {
+            try
+            {
+                var sTemp = string.Format("/ems/api/org/switch/v1/op/applyScene/{0}/scene2?time=0", _config.VirtualSwitchIdentifier);
+                _comms.SendRequest("Post", sTemp, string.Empty);
+            }
+            catch (Exception e)
+            {
+                Debug.Console(2, this, Debug.ErrorLogLevel.Error, "SetApplySceneWithIndex: InnerException: {0} Message: {1} StackTrace: {2}", e.InnerException, e.Message, e.StackTrace);
+            }
+        }
+
+        /// <summary>
+        /// Apply lighting scene using virtualSwitchIdentifer
+        /// </summary>
+        public void RecallScene03()
+        {
+            try
+            {
+                var sTemp = string.Format("/ems/api/org/switch/v1/op/applyScene/{0}/scene3?time=0", _config.VirtualSwitchIdentifier);
+                _comms.SendRequest("Post", sTemp, string.Empty);
+            }
+            catch (Exception e)
+            {
+                Debug.Console(2, this, Debug.ErrorLogLevel.Error, "SetApplySceneWithIndex: InnerException: {0} Message: {1} StackTrace: {2}", e.InnerException, e.Message, e.StackTrace);
+            }
+        }
+
+        /// <summary>
+        /// Apply lighting scene using virtualSwitchIdentifer
+        /// </summary>
+        public void RecallScene04()
+        {
+            try
+            {
+                var sTemp = string.Format("/ems/api/org/switch/v1/op/applyScene/{0}/scene4?time=0", _config.VirtualSwitchIdentifier);
+                _comms.SendRequest("Post", sTemp, string.Empty);
+            }
+            catch (Exception e)
+            {
+                Debug.Console(2, this, Debug.ErrorLogLevel.Error, "SetApplySceneWithIndex: InnerException: {0} Message: {1} StackTrace: {2}", e.InnerException, e.Message, e.StackTrace);
+            }
+        }
+
+        /// <summary>
+        /// Apply lighting scene using virtualSwitchIdentifer
+        /// </summary>
+        public void RecallScene05()
+        {
+            try
+            {
+                var sTemp = string.Format("/ems/api/org/switch/v1/op/applyScene/{0}/scene5?time=0", _config.VirtualSwitchIdentifier);
+                _comms.SendRequest("Post", sTemp, string.Empty);
+            }
+            catch (Exception e)
+            {
+                Debug.Console(2, this, Debug.ErrorLogLevel.Error, "SetApplySceneWithIndex: InnerException: {0} Message: {1} StackTrace: {2}", e.InnerException, e.Message, e.StackTrace);
+            }
+        }
+
+        /// <summary>
+        /// Apply lighting scene using virtualSwitchIdentifer
+        /// </summary>
+        public void RecallScene06()
+        {
+            try
+            {
+                var sTemp = string.Format("/ems/api/org/switch/v1/op/applyScene/{0}/scene6?time=0", _config.VirtualSwitchIdentifier);
+                _comms.SendRequest("Post", sTemp, string.Empty);
+            }
+            catch (Exception e)
+            {
+                Debug.Console(2, this, Debug.ErrorLogLevel.Error, "SetApplySceneWithIndex: InnerException: {0} Message: {1} StackTrace: {2}", e.InnerException, e.Message, e.StackTrace);
+            }
+        } 
+
+        /// <summary>
         /// Manually poll device using SendRequest method
         /// </summary>
-        public void SetManualPoll()
+        private void SetManualPoll()
         {
             //Custom command used to poll device
             _comms.SendRequest("Get", "/ems/api/org/em/v1/energy", string.Empty);
@@ -372,14 +441,15 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
             OnlineFeedback.FireUpdate();
         }
 
-        private void PrintInformation()
+        /// <summary>
+        /// Print Org, Campus, Building, and Floor information to console
+        /// </summary>
+        public void PrintInformation()
         {
             GetCustomPath(GetOrgDetails);
             GetCustomPath(GetAllCampuses);
             GetCustomPath(GetAllBuildings);
             GetCustomPath(GetAllFloors);            
-            // Use the 'Get Switch Groups' command to retrieve Switch IDs based on switch names - "/ems/api/org/switchgroups/list/{property}/{pid}"
-            // Use the 'Get Switch Scenes' command to retrieve scene IDs for each switch - "/ems/api/org/switch/v1/getSwitchScenes/{floor_id}/{switch_name}"
         }
     }   
 }
