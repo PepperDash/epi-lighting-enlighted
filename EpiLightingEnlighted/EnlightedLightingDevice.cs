@@ -143,6 +143,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
 
                 // Device name to bridge
                 trilist.SetString(_joinMap.Name.JoinNumber, Name);
+                
                 trilist.SetSigTrueAction(_joinMap.Scene.JoinNumber, RecallScene01);
                 trilist.SetSigTrueAction(_joinMap.Scene.JoinNumber + 1, RecallScene02);
                 trilist.SetSigTrueAction(_joinMap.Scene.JoinNumber + 2, RecallScene03);
@@ -292,17 +293,35 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         /// <summary>
         /// Apply lighting scene using virtualSwitchIdentifer
         /// </summary>
-        public void RecallScene01()
+        public void RecallScene(string dictionaryKeyIndex)
         {
             try
-            {
-                var sTemp = string.Format("/ems/api/org/switch/v1/op/applyScene/{0}/scene1?time=0", _config.VirtualSwitchIdentifier);
+            {                
+                Debug.Console(2, this, Debug.ErrorLogLevel.Error, "SetApplySceneWithIndex: {0}", dictionaryKeyIndex);
+                EnlightedLightingSceneIo sceneOjbect;
+                var found = _config.SceneDictionary.TryGetValue(dictionaryKeyIndex, out sceneOjbect);
+
+                if (!found)
+                {
+                    Debug.Console(2, this, Debug.ErrorLogLevel.Error, "SetApplySceneWithIndex: Variable from SceneDictionary not found");
+                    return;
+                }
+                
+                var sTemp = string.Format("/ems/api/org/switch/v1/op/applyScene/{0}/{1}?time=0", _config.VirtualSwitchIdentifier, sceneOjbect.SceneId);
                 _comms.SendRequest("Post", sTemp, string.Empty);
             }
             catch (Exception e)
             {
                 Debug.Console(2, this, Debug.ErrorLogLevel.Error, "SetApplySceneWithIndex: InnerException: {0} Message: {1} StackTrace: {2}", e.InnerException, e.Message, e.StackTrace);
             }
+        }
+
+        /// <summary>
+        /// Apply lighting scene using virtualSwitchIdentifer
+        /// </summary>
+        public void RecallScene01()
+        {
+            RecallScene("scene1");
         }
 
         /// <summary>
@@ -310,15 +329,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         /// </summary>
         public void RecallScene02()
         {
-            try
-            {
-                var sTemp = string.Format("/ems/api/org/switch/v1/op/applyScene/{0}/scene2?time=0", _config.VirtualSwitchIdentifier);
-                _comms.SendRequest("Post", sTemp, string.Empty);
-            }
-            catch (Exception e)
-            {
-                Debug.Console(2, this, Debug.ErrorLogLevel.Error, "SetApplySceneWithIndex: InnerException: {0} Message: {1} StackTrace: {2}", e.InnerException, e.Message, e.StackTrace);
-            }
+            RecallScene("scene2");
         }
 
         /// <summary>
@@ -326,15 +337,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         /// </summary>
         public void RecallScene03()
         {
-            try
-            {
-                var sTemp = string.Format("/ems/api/org/switch/v1/op/applyScene/{0}/scene3?time=0", _config.VirtualSwitchIdentifier);
-                _comms.SendRequest("Post", sTemp, string.Empty);
-            }
-            catch (Exception e)
-            {
-                Debug.Console(2, this, Debug.ErrorLogLevel.Error, "SetApplySceneWithIndex: InnerException: {0} Message: {1} StackTrace: {2}", e.InnerException, e.Message, e.StackTrace);
-            }
+            RecallScene("scene3");
         }
 
         /// <summary>
@@ -342,15 +345,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         /// </summary>
         public void RecallScene04()
         {
-            try
-            {
-                var sTemp = string.Format("/ems/api/org/switch/v1/op/applyScene/{0}/scene4?time=0", _config.VirtualSwitchIdentifier);
-                _comms.SendRequest("Post", sTemp, string.Empty);
-            }
-            catch (Exception e)
-            {
-                Debug.Console(2, this, Debug.ErrorLogLevel.Error, "SetApplySceneWithIndex: InnerException: {0} Message: {1} StackTrace: {2}", e.InnerException, e.Message, e.StackTrace);
-            }
+            RecallScene("scene4");
         }
 
         /// <summary>
@@ -358,15 +353,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         /// </summary>
         public void RecallScene05()
         {
-            try
-            {
-                var sTemp = string.Format("/ems/api/org/switch/v1/op/applyScene/{0}/scene5?time=0", _config.VirtualSwitchIdentifier);
-                _comms.SendRequest("Post", sTemp, string.Empty);
-            }
-            catch (Exception e)
-            {
-                Debug.Console(2, this, Debug.ErrorLogLevel.Error, "SetApplySceneWithIndex: InnerException: {0} Message: {1} StackTrace: {2}", e.InnerException, e.Message, e.StackTrace);
-            }
+            RecallScene("scene5");
         }
 
         /// <summary>
@@ -374,15 +361,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         /// </summary>
         public void RecallScene06()
         {
-            try
-            {
-                var sTemp = string.Format("/ems/api/org/switch/v1/op/applyScene/{0}/scene6?time=0", _config.VirtualSwitchIdentifier);
-                _comms.SendRequest("Post", sTemp, string.Empty);
-            }
-            catch (Exception e)
-            {
-                Debug.Console(2, this, Debug.ErrorLogLevel.Error, "SetApplySceneWithIndex: InnerException: {0} Message: {1} StackTrace: {2}", e.InnerException, e.Message, e.StackTrace);
-            }
+            RecallScene("scene6");
         } 
 
         /// <summary>
