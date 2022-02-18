@@ -1,15 +1,11 @@
-# PepperDash Essentials Enlighted Lighting Plugin (c) 2021
-
+![PepperDash Logo](/images/logo_pdt_no_tagline_600.png)
 ## License
-
 Provided under MIT license
-
-## Overview
+# PepperDash Essentials Enlighted Lighting Plugin (c) 2022
 
 This repo contains a plugin for use with [PepperDash Essentials](https://github.com/PepperDash/Essentials). This plugin enables Essentials to communicate with and control Enlighting Lighting Energy Manager (EM) lighting scenes via HTTPS.
 
-## Example Config Object
-
+### Essentials Device Configuration
 ```json
 {
         "key": "lighting-1",
@@ -56,7 +52,79 @@ This repo contains a plugin for use with [PepperDash Essentials](https://github.
         }
       }
 ```
+## Device Bridging
+
+### Essentials Device Bridge Configuration
+
+```json
+ {
+        "key": "lighting-bridge-1",
+        "uid": 2,
+        "name": "Lighting Bridge 1",
+        "group": "api",
+        "type": "eiscApiAdvanced",
+        "properties": {
+          "control": {
+            "tcpSshProperties": {
+              "address": "127.0.0.2",
+              "port": 0
+            },
+            "ipid": "ac",
+            "method": "ipidTcp"
+          },
+          "devices": [
+            {
+              "deviceKey": "lighting-1",
+              "joinStart": 1
+            }
+          ]
+        }
+      }
+```
 For more configuration information, see the [PepperDash Essentials wiki](https://github.com/PepperDash/Essentials/wiki).
+
+### Essentials Bridge Join Map
+
+The join map below documents the commands implemented in this plugin.
+
+### Digitals
+
+| Input                         | I/O | Output                    |
+| ----------------------------- | --- | ------------------------- |
+|                               | 1   | Device Online Fb          |
+|                               | +   |                           |
+| Recall Scene 1                | 11  |                           |
+| Recall Scene 2                | 12  |                           |
+| Recall Scene 3                | 13  |                           |
+| Recall Scene 4                | 14  |                           |
+| Recall Scene 5                | 15  |                           |
+| Recall Scene 6                | 16  |                           |
+
+### Analogs
+
+None
+
+### Serials
+
+| Input | I/O | Output                      |
+| ----- | --- | --------------------------- |
+|       | 1   | Device Name                 |
+
+## DEVJSON Commands
+
+When using DEVJSON commands update the program index `devjson:{programIndex}` and `deviceKey` values to match the testing environment.
+
+```json
+devjson:1 {"deviceKey":"lighting-1", "methodName":"RecallScene01", "params":[]}
+devjson:1 {"deviceKey":"lighting-1", "methodName":"RecallScene02", "params":[]}
+devjson:1 {"deviceKey":"lighting-1", "methodName":"RecallScene03", "params":[]}
+devjson:1 {"deviceKey":"lighting-1", "methodName":"RecallScene04", "params":[]}
+devjson:1 {"deviceKey":"lighting-1", "methodName":"RecallScene05", "params":[]}
+devjson:1 {"deviceKey":"lighting-1", "methodName":"RecallScene06", "params":[]}
+devjson:1 {"deviceKey":"lighting-1", "methodName":"PrintInformation", "params":[]}
+devjson:1 {"deviceKey":"lighting-1", "methodName":"GetCustomPath", "params":["/ems/api/org/em/v1/energy"]}
+devjson:1 {"deviceKey":"lighting-1", "methodName":"PostCustomPath", "params":["/ems/api/org/switch/v1/op/applyScene/{switch_id}/{scene_id}?time=60"]}
+```
 
 ## Github Actions
 
