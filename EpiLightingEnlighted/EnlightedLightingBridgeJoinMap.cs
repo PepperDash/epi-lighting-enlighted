@@ -31,37 +31,25 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                 JoinType = eJoinType.Digital
             });
 
-        [JoinName("PrintAllInfo")]
-        public JoinDataComplete PrintAllInfo = new JoinDataComplete(
-            new JoinData()
-            {
-                JoinNumber = 1,
-                JoinSpan = 1
-            },
-            new JoinMetadata()
-            {
-                Description = "Print all information in console",
-                JoinCapabilities = eJoinCapabilities.FromSIMPL,
-                JoinType = eJoinType.Digital
-            });
-
-		#endregion
-
-		#region Analog
-		
         [JoinName("Scene")]
         public JoinDataComplete Scene = new JoinDataComplete(
             new JoinData()
             {
-                JoinNumber = 1,
-                JoinSpan = 1
+                JoinNumber = 11,
+                JoinSpan = EnlightedLightingDevice.MaxIo
             },
             new JoinMetadata()
             {
                 Description = "Recall scene",
                 JoinCapabilities = eJoinCapabilities.FromSIMPL,
-                JoinType = eJoinType.Analog
-            });
+                JoinType = eJoinType.Digital
+            });       
+
+		#endregion
+
+		#region Analog
+		
+
 		#endregion
 
 		#region Serial
@@ -77,34 +65,6 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
             {
                 Description = "Enlighted Lighting Device Name",
                 JoinCapabilities = eJoinCapabilities.ToSIMPL,
-                JoinType = eJoinType.Serial
-            });
-
-        [JoinName("GetCustomPath")]
-        public JoinDataComplete GetCustomPath = new JoinDataComplete(
-            new JoinData()
-            {
-                JoinNumber = 1,
-                JoinSpan = 1
-            },
-            new JoinMetadata()
-            {
-                Description = "GET path manually, do not include header or delimeter",
-                JoinCapabilities = eJoinCapabilities.FromSIMPL,
-                JoinType = eJoinType.Serial
-            });
-
-        [JoinName("PostCustomPath")]
-        public JoinDataComplete PostCustomPath = new JoinDataComplete(
-            new JoinData()
-            {
-                JoinNumber = 2,
-                JoinSpan = 1
-            },
-            new JoinMetadata()
-            {
-                Description = "POST path manually, do not include header or delimeter",
-                JoinCapabilities = eJoinCapabilities.FromSIMPL,
                 JoinType = eJoinType.Serial
             });
 

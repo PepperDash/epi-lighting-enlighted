@@ -49,8 +49,8 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         /// <returns></returns>
         public override EssentialsDevice BuildDevice(PepperDash.Essentials.Core.Config.DeviceConfig dc)
         {
-            Debug.Console(0, "{0}", new String('-', 100));
-            Debug.Console(0, "[{0}] Factory Attempting to create new device from type: '{1}'", dc.Key, dc.Type);
+            Debug.Console(1, "{0}", new String('-', 100));
+            Debug.Console(1, "[{0}] Factory Attempting to create new device from type: '{1}'", dc.Key, dc.Type);
 
             try
             {
