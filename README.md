@@ -1,4 +1,4 @@
-![PepperDash Logo](/images/logo_pdt_no_tagline_600.png)
+![PepperDash Logo](/images/Essentials-Text-Blue.png)
 ## License
 Provided under MIT license
 # PepperDash Essentials Enlighted Lighting Plugin (c) 2022
