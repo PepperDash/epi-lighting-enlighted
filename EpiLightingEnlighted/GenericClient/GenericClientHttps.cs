@@ -18,9 +18,11 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
     public class GenericClientHttps : IRestfulComms
     {
         private const string DefaultRequestType = "GET";
-        private readonly HttpsClient _client;               
+        private readonly HttpsClient _client;
+        private readonly EnlightedLightingDebug _enlightedDebug = new EnlightedLightingDebug();
         private readonly CrestronQueue<Action> _requestQueue = new CrestronQueue<Action>(20);
-        private bool HeaderUsesApiKey = true;
+        private const bool HeaderUsesApiKey = true;
+
         /// <summary>
         /// Custom Authorization with ApiKeyData
         /// </summary>
@@ -72,13 +74,13 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
             Password = controlConfig.TcpSshProperties.Password ?? "";
             AuthorizationBase64 = EncodeBase64(Username, Password);
 
-            Debug.Console(2, this, "{0}", new String('-', 80));
-            Debug.Console(2, this, "GenericClient: Key = {0}", Key);
-            Debug.Console(2, this, "GenericClient: Host = {0}", Host);
-            Debug.Console(2, this, "GenericClient: Port = {0}", Port);
-            Debug.Console(2, this, "GenericClient: Username = {0}", Username);
-            Debug.Console(2, this, "GenericClient: Password = {0}", Password);
-            Debug.Console(2, this, "GenericClient: AuthorizationBase64 = {0}", AuthorizationBase64);     
+            Debug.Console(_enlightedDebug.DebugVerbose, this, "{0}", new String('-', 80));
+            Debug.Console(_enlightedDebug.DebugVerbose, this, "GenericClient: Key = {0}", Key);
+            Debug.Console(_enlightedDebug.DebugVerbose, this, "GenericClient: Host = {0}", Host);
+            Debug.Console(_enlightedDebug.DebugVerbose, this, "GenericClient: Port = {0}", Port);
+            Debug.Console(_enlightedDebug.DebugVerbose, this, "GenericClient: Username = {0}", Username);
+            Debug.Console(_enlightedDebug.DebugVerbose, this, "GenericClient: Password = {0}", Password);
+            Debug.Console(_enlightedDebug.DebugVerbose, this, "GenericClient: AuthorizationBase64 = {0}", AuthorizationBase64);     
 
             _client = new HttpsClient
             {
@@ -91,8 +93,8 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                 Verbose = true                
             };
             
-            Debug.Console(2, this, "_clientUrl: {0}", _client.Url.ToString());
-            Debug.Console(2, this, "{0}", new String('-', 80));           
+            Debug.Console(_enlightedDebug.DebugVerbose, this, "_clientUrl: {0}", _client.Url.ToString());
+            Debug.Console(_enlightedDebug.DebugVerbose, this, "{0}", new String('-', 80));           
         }
 
         #region IRestfulComms Members
@@ -140,15 +142,15 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
             }
             else if (!string.IsNullOrEmpty(AuthorizationBase64)) { request.Header.SetHeaderValue("Authorization", AuthorizationBase64); }
 
-            Debug.Console(2, "{0}", new String('-', 100));
-            Debug.Console(2, this, @"Request:
+            Debug.Console(_enlightedDebug.DebugVerbose, "{0}", new String('-', 100));
+            Debug.Console(_enlightedDebug.DebugVerbose, this, @"Request:
                 url: {0}
                 path: {1}
                 content: {2}
                 requestType: {3}
                 requestHeader: {4}",
                 request.Url, path, request.ContentString, request.RequestType, request.Header);
-            Debug.Console(2, "{0}", new String('-', 100));
+            Debug.Console(_enlightedDebug.DebugVerbose, "{0}", new String('-', 100));
             
             try
             {
@@ -158,7 +160,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                     {
                         if (response == null)
                         {                            
-                            Debug.Console(1, this, "Response is null, error: {0}", error);
+                            Debug.Console(_enlightedDebug.DebugWarn, this, "Response is null, error: {0}", error);
                             return;
                         }                        
 
@@ -171,7 +173,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                     {
                         if (response == null)
                         {
-                            Debug.Console(1, this, "Response is null, error: {0}", error);
+                            Debug.Console(_enlightedDebug.DebugWarn, this, "Response is null, error: {0}", error);
                             return;
                         }
 
@@ -183,17 +185,17 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
             {
                 if (e.Message.Contains("No Endpoint"))
                 {
-                    Debug.Console(1, this, Debug.ErrorLogLevel.Error, "SessionManager: No endpoint");
+                    Debug.Console(_enlightedDebug.DebugWarn, this, Debug.ErrorLogLevel.Error, "No endpoint");
                 }
                 else if (e.Message.Contains("Invalid URI:"))
                 {
-                    Debug.Console(1, this, Debug.ErrorLogLevel.Error, "SessionManager: Invalid URI");
+                    Debug.Console(_enlightedDebug.DebugWarn, this, Debug.ErrorLogLevel.Error, "Invalid URI");
                 }
                 else
                 {
-                    Debug.Console(1, this, Debug.ErrorLogLevel.Error, "SendRequest Exception: {0}", e.Message);
-                    Debug.Console(2, this, Debug.ErrorLogLevel.Error, "SendRequest Stack Trace: {0}", e.StackTrace);
-                    if (e.InnerException != null) Debug.Console(1, this, Debug.ErrorLogLevel.Error, "SendRequest Inner Exception: {0}", e.InnerException);
+                    Debug.Console(_enlightedDebug.DebugWarn, this, Debug.ErrorLogLevel.Error, "SendRequest Exception: {0}", e.Message);
+                    Debug.Console(_enlightedDebug.DebugVerbose, this, Debug.ErrorLogLevel.Error, "SendRequest Stack Trace: {0}", e.StackTrace);
+                    if (e.InnerException != null) Debug.Console(_enlightedDebug.DebugWarn, this, Debug.ErrorLogLevel.Error, "SendRequest Inner Exception: {0}", e.InnerException);
                 }
             }
         }
@@ -207,7 +209,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         {
             if (string.IsNullOrEmpty(request))
             {
-                Debug.Console(2, this, Debug.ErrorLogLevel.Error, "SendRequest: Request is null or empty");
+                Debug.Console(_enlightedDebug.DebugVerbose, this, Debug.ErrorLogLevel.Error, "SendRequest: Request is null or empty");
                 return;
             }
             SendRequest(DefaultRequestType, request, contentString);
@@ -220,7 +222,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         /// <param name="args"></param>
         private void OnResponseRecieved(GenericClientResponseEventArgs args)
         {
-            Debug.Console(2, this, "OnResponseRecieved: args.Code = {0}, args.ContentString = {1}", args.Code, args.ContentString);
+            Debug.Console(_enlightedDebug.DebugVerbose, this, "OnResponseRecieved: args.Code = {0}, args.ContentString = {1}", args.Code, args.ContentString);
             CheckRequestQueue();
 
             var handler = ResponseReceived;
@@ -233,9 +235,9 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         /// </summary>
         private void CheckRequestQueue()
         {
-            Debug.Console(2, this, "CheckRequestQueue: _requestQueue.Count = {0}", _requestQueue.Count);
+            Debug.Console(_enlightedDebug.DebugVerbose, this, "CheckRequestQueue: _requestQueue.Count = {0}", _requestQueue.Count);
             var nextRequest = _requestQueue.TryToDequeue();
-            Debug.Console(2, this, "CheckRequestQueue: _requestQueue.TryToDequeue was {0}",
+            Debug.Console(_enlightedDebug.DebugVerbose, this, "CheckRequestQueue: _requestQueue.TryToDequeue was {0}",
                 (nextRequest == null) ? "unsuccessful" : "successful");
             if (nextRequest != null)
             {
@@ -260,7 +262,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
             }
             catch (Exception ex)
             {
-                Debug.Console(2, this, Debug.ErrorLogLevel.Error, "EncodeBase64 Exception:\r{0}", ex);
+                Debug.Console(_enlightedDebug.DebugVerbose, this, Debug.ErrorLogLevel.Error, "EncodeBase64 Exception:\r{0}", ex);
                 return "";
             }
         }

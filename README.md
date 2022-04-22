@@ -122,8 +122,10 @@ devjson:1 {"deviceKey":"lighting-1", "methodName":"RecallScene04", "params":[]}
 devjson:1 {"deviceKey":"lighting-1", "methodName":"RecallScene05", "params":[]}
 devjson:1 {"deviceKey":"lighting-1", "methodName":"RecallScene06", "params":[]}
 devjson:1 {"deviceKey":"lighting-1", "methodName":"PrintInformation", "params":[]}
-devjson:1 {"deviceKey":"lighting-1", "methodName":"GetCustomPath", "params":["/ems/api/org/em/v1/energy"]}
-devjson:1 {"deviceKey":"lighting-1", "methodName":"PostCustomPath", "params":["/ems/api/org/switch/v1/op/applyScene/{switch_id}/{scene_id}?time=60"]}
+devjson:1 {"deviceKey":"lighting-1", "methodName":"GetCustomPath", "params":["/ems/api/org/floor/list"]}
+devjson:1 {"deviceKey":"lighting-1", "methodName":"GetCustomPath", "params":["/ems/api/org/switchgroups/list/{propertyType}/{PID}"]}
+devjson:1 {"deviceKey":"lighting-1", "methodName":"GetCustomPath", "params":["/ems/api/org/switch/v1/getSwitchScenes/{floor_id}/{switch_name}"]}
+devjson:1 {"deviceKey":"lighting-1", "methodName":"PostCustomPath", "params":["/ems/api/org/switch/v1/op/applyScene/{switch_id}/{scene_id}?time=0"]}
 ```
 
 ## Github Actions
