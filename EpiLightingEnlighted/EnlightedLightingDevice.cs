@@ -36,6 +36,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         /// Store the config locally
         /// </summary>
         private readonly EnlightedLightingConfig _config;
+        private readonly EnlightedLightingDebug _enlightedDebug = new EnlightedLightingDebug();
         private readonly IRestfulComms _comms;
         //private readonly long _pollTimeMs;
         //private readonly long _warningTimeoutMs;
@@ -66,7 +67,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
 	    public EnlightedLightingDevice(string key, string name, EnlightedLightingConfig config, IRestfulComms client)
 	        : base(key, name)
 	    {
-	        Debug.Console(1, this, "Constructing new Enlighted Lighting plugin instance using key: '{0}', name: '{1}'", key,
+	        Debug.Console(_enlightedDebug.DebugWarn, this, "Constructing new Enlighted Lighting plugin instance using key: '{0}', name: '{1}'", key,
 	            name);            
 
             OnlineFeedback  = new BoolFeedback(()=> _deviceOnline);
@@ -81,7 +82,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
 	        _comms = client;
 	        if (_comms == null)
 	        {
-	            Debug.Console(0, this, Debug.ErrorLogLevel.Error, "Failed to construct GenericClient using method '{0}'",
+	            Debug.Console(_enlightedDebug.DebugInfo, this, Debug.ErrorLogLevel.Error, "Failed to construct GenericClient using method '{0}'",
 	                _config.Control.Method);
 	            return;
 	        }            
@@ -99,7 +100,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
 	        //OnlineFeedback = new BoolFeedback(() => true);	// false > _commsMonitor.IsOnline
 	        //StatusFeedback = new IntFeedback(() => 2);		// 0 > (int)_commsMonitor.Status
 
-	        Debug.Console(1, "{0}", new String('-', 100));
+	        Debug.Console(_enlightedDebug.DebugWarn, "{0}", new String('-', 100));
 	    }
 	    #endregion
 
@@ -118,10 +119,10 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         {
             if (trilist == null)
             {
-                Debug.Console(0, "{0}", new String('-', 100));
-                Debug.Console(0, this, "LinkToApi(trilist-null joinStart-{1}, joinMapKey-{2}, bridge-[null: {3}])", joinStart, joinMapKey, bridge == null);
-                Debug.Console(0, this, "LinkToApi failed to link trilist, {0} bridge will not be function", Key);
-                Debug.Console(0, "{0}", new String('-', 100));
+                Debug.Console(_enlightedDebug.DebugInfo, "{0}", new String('-', 100));
+                Debug.Console(_enlightedDebug.DebugInfo, this, "LinkToApi(trilist-null joinStart-{1}, joinMapKey-{2}, bridge-[null: {3}])", joinStart, joinMapKey, bridge == null);
+                Debug.Console(_enlightedDebug.DebugInfo, this, "LinkToApi failed to link trilist, {0} bridge will not be function", Key);
+                Debug.Console(_enlightedDebug.DebugInfo, "{0}", new String('-', 100));
                 return;
             }
 
@@ -138,8 +139,8 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                     _joinMap.SetCustomJoinData(customJoins);
                 }
 
-                Debug.Console(0, this, "Linking to Trilist '{0}'", trilist.ID.ToString("X"));
-                Debug.Console(0, this, "Linking to Bridge Type {0}", GetType().Name);
+                Debug.Console(_enlightedDebug.DebugInfo, this, "Linking to Trilist '{0}'", trilist.ID.ToString("X"));
+                Debug.Console(_enlightedDebug.DebugInfo, this, "Linking to Bridge Type {0}", GetType().Name);
 
                 // Device name to bridge
                 trilist.SetString(_joinMap.Name.JoinNumber, Name);
@@ -163,9 +164,9 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
             }
             catch (Exception e)
             {
-                Debug.Console(0, this, "LinkToApi Exception: {0}", e.Message);
-                Debug.Console(0, this, "LinkToApi Stack Trace: {0}", e.StackTrace);
-                if (e.InnerException != null) Debug.Console(0, this, "LinkToApi Inner Exception: {0}", e.InnerException);
+                Debug.Console(_enlightedDebug.DebugInfo, this, "LinkToApi Exception: {0}", e.Message);
+                Debug.Console(_enlightedDebug.DebugInfo, this, "LinkToApi Stack Trace: {0}", e.StackTrace);
+                if (e.InnerException != null) Debug.Console(_enlightedDebug.DebugInfo, this, "LinkToApi Inner Exception: {0}", e.InnerException);
             }
         }
         #endregion                 
@@ -177,15 +178,15 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         private void SetExtendedDebuggingState(bool state)
         {
             //ExtendedDebuggingState = state;
-            Debug.Console(0, this, "Extended Debugging: {0}", state ? "On" : "Off");
+            Debug.Console(_enlightedDebug.DebugInfo, this, "Extended Debugging: {0}", state ? "On" : "Off");
         }
 
         private void _comms_ResponseReceived(object sender, GenericClientResponseEventArgs args)
         {
             try
             {
-                Debug.Console(1, this, "Response Code: {0}", args.Code);
-                Debug.Console(1, this, "Response URL: {0}", args.ResponseUrl);
+                Debug.Console(_enlightedDebug.DebugWarn, this, "Response Code: {0}", args.Code);
+                Debug.Console(_enlightedDebug.DebugWarn, this, "Response URL: {0}", args.ResponseUrl);
                 //If we get response.code 200 then parse
                 //Perahps some will help you know if your AUTH failed or if other things fail! Make it helpful.
                 //401 is unahtorizied and 403 is forboredden
@@ -200,28 +201,28 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                     case 200: // Ok, valid response, request successful
                         return;                        
                     case 302:
-                        Debug.Console(1, this, Debug.ErrorLogLevel.Error, "Moved temporarily, user not authenticated, URL redirection");
+                        Debug.Console(_enlightedDebug.DebugWarn, this, Debug.ErrorLogLevel.Error, "Moved temporarily, user not authenticated, URL redirection");
                         break;
                     case 401:
-                        Debug.Console(1, this, Debug.ErrorLogLevel.Error, "Request not completed, lacks valid authentication credentials for requested resource");
+                        Debug.Console(_enlightedDebug.DebugWarn, this, Debug.ErrorLogLevel.Error, "Request not completed, lacks valid authentication credentials for requested resource");
                         break;
                     case 403:
-                        Debug.Console(1, this, Debug.ErrorLogLevel.Error, "Request forbidden, permission denied, no access to the user");
+                        Debug.Console(_enlightedDebug.DebugWarn, this, Debug.ErrorLogLevel.Error, "Request forbidden, permission denied, no access to the user");
                         break;
                     case 404:
-                        Debug.Console(1, this, Debug.ErrorLogLevel.Error, "API not valid or not found");
+                        Debug.Console(_enlightedDebug.DebugWarn, this, Debug.ErrorLogLevel.Error, "API not valid or not found");
                         break;
                     case 405:
-                        Debug.Console(1, this, Debug.ErrorLogLevel.Error, "Method not allowed: Server understood request but method not supported by target resource");
+                        Debug.Console(_enlightedDebug.DebugWarn, this, Debug.ErrorLogLevel.Error, "Method not allowed: Server understood request but method not supported by target resource");
                         break;
                     case 406:
-                        Debug.Console(1, this, Debug.ErrorLogLevel.Error, "Not acceptable, server cannot produce response from given request");
+                        Debug.Console(_enlightedDebug.DebugWarn, this, Debug.ErrorLogLevel.Error, "Not acceptable, server cannot produce response from given request");
                         break;
                     case 407:
-                        Debug.Console(1, this, Debug.ErrorLogLevel.Error, "Request not applied, lacks valid authentication credentials for proxy server between browser and server to access requested resource");
+                        Debug.Console(_enlightedDebug.DebugWarn, this, Debug.ErrorLogLevel.Error, "Request not applied, lacks valid authentication credentials for proxy server between browser and server to access requested resource");
                         break;
                     case 408:
-                        Debug.Console(1, this, Debug.ErrorLogLevel.Error, "API received after time expired, API canceled");
+                        Debug.Console(_enlightedDebug.DebugWarn, this, Debug.ErrorLogLevel.Error, "API received after time expired, API canceled");
                         break;
                 }
 
@@ -232,10 +233,10 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
             }
             catch (Exception e)
             {
-                Debug.Console(1, this, Debug.ErrorLogLevel.Error, "_comms_ResponseReceived Exception: {0}", e.Message);
-                Debug.Console(2, this, Debug.ErrorLogLevel.Error, "_comms_ResponseReceived Stack Trace: {0}", e.StackTrace);
+                Debug.Console(_enlightedDebug.DebugWarn, this, Debug.ErrorLogLevel.Error, "_comms_ResponseReceived Exception: {0}", e.Message);
+                Debug.Console(_enlightedDebug.DebugVerbose, this, Debug.ErrorLogLevel.Error, "_comms_ResponseReceived Stack Trace: {0}", e.StackTrace);
                 if (e.InnerException != null)
-                    Debug.Console(1, Debug.ErrorLogLevel.Error, "_comms_ResponseReceived Inner Exception: {0}",
+                    Debug.Console(_enlightedDebug.DebugWarn, Debug.ErrorLogLevel.Error, "_comms_ResponseReceived Inner Exception: {0}",
                         e.InnerException);
             }
         }
@@ -256,13 +257,13 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
                 // the last scene called, only the lighting levels per load which we are not interested in parsing or saving.
                 // Since the response is already being printed into console if/when debug is active we get the status response
                 // and can view the status via the API with no need to print it here.
-                Debug.Console(1, this, Debug.ErrorLogLevel.None, "Reponse from device:  {0}", responseObj);                
+                Debug.Console(_enlightedDebug.DebugWarn, this, Debug.ErrorLogLevel.None, "Reponse from device:  {0}", responseObj);                
             }
             catch (Exception e)
             {
-                Debug.Console(1, this, Debug.ErrorLogLevel.Error, "ParseResponse Exception: {0}", e.Message);
-                Debug.Console(2, this, Debug.ErrorLogLevel.Error, "ParseResponse Stack Trace: {0}", e.StackTrace);
-                if (e.InnerException != null) Debug.Console(1, this, Debug.ErrorLogLevel.Error, "ParseResponse Inner Exception: {0}", e.InnerException);
+                Debug.Console(_enlightedDebug.DebugWarn, this, Debug.ErrorLogLevel.Error, "ParseResponse Exception: {0}", e.Message);
+                Debug.Console(_enlightedDebug.DebugVerbose, this, Debug.ErrorLogLevel.Error, "ParseResponse Stack Trace: {0}", e.StackTrace);
+                if (e.InnerException != null) Debug.Console(_enlightedDebug.DebugWarn, this, Debug.ErrorLogLevel.Error, "ParseResponse Inner Exception: {0}", e.InnerException);
             }
         }
 
@@ -297,13 +298,13 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         {
             try
             {                
-                Debug.Console(2, this, Debug.ErrorLogLevel.Error, "SetApplySceneWithIndex: {0}", dictionaryKeyIndex);
+                Debug.Console(_enlightedDebug.DebugVerbose, this, Debug.ErrorLogLevel.Error, "SetApplySceneWithIndex: {0}", dictionaryKeyIndex);
                 EnlightedLightingSceneIo sceneOjbect;
                 var found = _config.SceneDictionary.TryGetValue(dictionaryKeyIndex, out sceneOjbect);
 
                 if (!found)
                 {
-                    Debug.Console(2, this, Debug.ErrorLogLevel.Error, "SetApplySceneWithIndex: Variable from SceneDictionary not found");
+                    Debug.Console(_enlightedDebug.DebugVerbose, this, Debug.ErrorLogLevel.Error, "SetApplySceneWithIndex: Variable from SceneDictionary not found");
                     return;
                 }
                 
@@ -312,7 +313,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
             }
             catch (Exception e)
             {
-                Debug.Console(2, this, Debug.ErrorLogLevel.Error, "SetApplySceneWithIndex: InnerException: {0} Message: {1} StackTrace: {2}", e.InnerException, e.Message, e.StackTrace);
+                Debug.Console(_enlightedDebug.DebugVerbose, this, Debug.ErrorLogLevel.Error, "SetApplySceneWithIndex: InnerException: {0} Message: {1} StackTrace: {2}", e.InnerException, e.Message, e.StackTrace);
             }
         }
 
@@ -370,7 +371,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         private void SetManualPoll()
         {
             //Custom command used to poll device
-            _comms.SendRequest("Get", "/ems/api/org/em/v1/energy", string.Empty);
+            _comms.SendRequest("Get", "/ems/api/org/company", string.Empty);
         }
 
         private void ResetPingTimer()
@@ -408,14 +409,14 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
 
         private void PingTimerCallback(object o)
         {
-            Debug.Console(1, this, Debug.ErrorLogLevel.Notice, "Ping timer expired");
+            Debug.Console(_enlightedDebug.DebugWarn, this, Debug.ErrorLogLevel.Notice, "Ping timer expired");
             SetManualPoll();
             StartPingTImer();
         }
 
         private void OfflineTimerCallback(object o)
         {
-            Debug.Console(1, this, Debug.ErrorLogLevel.Notice, "Offline timer expired");
+            Debug.Console(_enlightedDebug.DebugWarn, this, Debug.ErrorLogLevel.Notice, "Offline timer expired");
             _deviceOnline = false;
             OnlineFeedback.FireUpdate();
         }
