@@ -41,8 +41,8 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
             new JoinMetadata()
             {
                 Description = "Recall scene",
-                JoinCapabilities = eJoinCapabilities.FromSIMPL,
-                JoinType = eJoinType.Digital
+                JoinCapabilities = eJoinCapabilities.ToFromSIMPL,
+                JoinType = eJoinType.DigitalSerial
             });       
 
 		#endregion
