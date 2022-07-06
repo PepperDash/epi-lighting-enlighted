@@ -1,10 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using PepperDash.Core;
 using Newtonsoft.Json;
 using Crestron.SimplSharp;
 using PepperDash.Essentials.Core;
 using PepperDash.Essentials.Core.Bridges;
 using Crestron.SimplSharpPro.DeviceSupport;
+using PepperDash.Essentials.Core.Lighting;
 
 namespace PepperDash.Essentials.Plugin.EnlightedLighting
 {
@@ -30,7 +33,7 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
     /// <summary>
     /// Create the bridgeable device
     /// </summary>
-	public class EnlightedLightingDevice : EssentialsBridgeableDevice
+	public class EnlightedLightingDevice : EssentialsBridgeableDevice, ILightingScenes
     {
         /// <summary>
         /// Store the config locally
@@ -50,7 +53,6 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
         public const int MaxIo = 6;
         private CTimer _pingTimer;
         private CTimer _offlineTimer;
-        private EnlightedLightingBridgeJoinMap _joinMap { get; set; }
         public SendLightingApiRequest SendLightingRequest { get; set; }
         public BoolFeedback OnlineFeedback { get; private set; }        
         private bool _deviceOnline;        
@@ -69,9 +71,9 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
 	    {
 	        DebugLevel = 1;
 	        VerboseLevel = 2;
-
-	        Debug.Console(VerboseLevel, this, "Constructing new Enlighted Lighting plugin instance using key: '{0}', name: '{1}'", key,
-	            name);            
+	        LightingScenes = 
+	            config.SceneDictionary.Select(
+	                scene => new LightingScene {ID = scene.Value.SceneId.ToString("D"), Name = scene.Value.Name}).ToList();
 
             OnlineFeedback  = new BoolFeedback(()=> _deviceOnline);
 	        StartPingTImer(); // Start CTimer
@@ -131,38 +133,54 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
 
             try
             {
-                _joinMap = new EnlightedLightingBridgeJoinMap(joinStart);
+                var joinMap = new EnlightedLightingBridgeJoinMap(joinStart);
 
                 // Add the join map to the collection on the bridge if not null
-                if (bridge != null) bridge.AddJoinMap(Key, _joinMap);
+                if (bridge != null) bridge.AddJoinMap(Key, joinMap);
 
                 var customJoins = JoinMapHelper.TryGetJoinMapAdvancedForDevice(joinMapKey);
                 if (customJoins != null)
                 {
-                    _joinMap.SetCustomJoinData(customJoins);
+                    joinMap.SetCustomJoinData(customJoins);
                 }
 
-                Debug.Console(TraceLevel, this, "Linking to Trilist '{0}'", trilist.ID.ToString("X"));
-                Debug.Console(TraceLevel, this, "Linking to Bridge Type {0}", GetType().Name);
+                Debug.Console(VerboseLevel, this, "Linking to Trilist '{0}'", trilist.ID.ToString("X"));
+                Debug.Console(VerboseLevel, this, "Linking to Bridge Type {0}", GetType().Name);
 
                 // Device name to bridge
-                trilist.SetString(_joinMap.Name.JoinNumber, Name);
-                
-                trilist.SetSigTrueAction(_joinMap.Scene.JoinNumber, RecallScene01);
-                trilist.SetSigTrueAction(_joinMap.Scene.JoinNumber + 1, RecallScene02);
-                trilist.SetSigTrueAction(_joinMap.Scene.JoinNumber + 2, RecallScene03);
-                trilist.SetSigTrueAction(_joinMap.Scene.JoinNumber + 3, RecallScene04);
-                trilist.SetSigTrueAction(_joinMap.Scene.JoinNumber + 4, RecallScene05);
-                trilist.SetSigTrueAction(_joinMap.Scene.JoinNumber + 5, RecallScene06);                           
+                trilist.SetString(joinMap.Name.JoinNumber, Name);
+
+                /*
+                trilist.SetSigTrueAction(joinMap.Scene.JoinNumber, RecallScene01);
+                trilist.SetSigTrueAction(joinMap.Scene.JoinNumber + 1, RecallScene02);
+                trilist.SetSigTrueAction(joinMap.Scene.JoinNumber + 2, RecallScene03);
+                trilist.SetSigTrueAction(joinMap.Scene.JoinNumber + 3, RecallScene04);
+                trilist.SetSigTrueAction(joinMap.Scene.JoinNumber + 4, RecallScene05);
+                trilist.SetSigTrueAction(joinMap.Scene.JoinNumber + 5, RecallScene06);*/
+
+                for (ushort i = 0; i < joinMap.Scene.JoinSpan; ++i)
+                {
+                    var scene = LightingScenes.ElementAtOrDefault(i);
+                    if (scene == null)
+                        continue;
+
+                    var joinActual = joinMap.Scene.JoinNumber + i;
+                    Debug.Console(VerboseLevel, this, "Linking SceneID:{0} {1} to Join:{2}", scene.ID, scene.Name, joinActual);
+                    var feedback = new StringFeedback(() => scene.Name);
+
+                    feedback.LinkInputSig(trilist.StringInput[joinActual]);
+                    trilist.SetSigTrueAction(joinActual, () => SelectScene(scene));
+                    feedback.FireUpdate();
+                }
 
                 // Device online status to bridge
-                OnlineFeedback.LinkInputSig(trilist.BooleanInput[_joinMap.IsOnline.JoinNumber]);
+                OnlineFeedback.LinkInputSig(trilist.BooleanInput[joinMap.IsOnline.JoinNumber]);
                 
                 trilist.OnlineStatusChange += (device, args) =>
                 {
                     if (!args.DeviceOnLine) return;
 
-                    trilist.SetString(_joinMap.Name.JoinNumber, Name);                  
+                    trilist.SetString(joinMap.Name.JoinNumber, Name);                  
                 };
             }
             catch (Exception e)
@@ -318,6 +336,11 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
             {
                 Debug.Console(VerboseLevel, this, Debug.ErrorLogLevel.Error, "SetApplySceneWithIndex: InnerException: {0} Message: {1} StackTrace: {2}", e.InnerException, e.Message, e.StackTrace);
             }
+        }
+
+        public static string BuildScenePath(uint virtualSwitchIdentifier, string sceneId)
+        {
+            return string.Format("/ems/api/org/switch/v1/op/applyScene/{0}/{1}?time=0", virtualSwitchIdentifier, sceneId);
         }
 
         /// <summary>
@@ -495,5 +518,25 @@ namespace PepperDash.Essentials.Plugin.EnlightedLighting
             _debugTimerActive = _debugTimer != null;
         }
 
+        public void SelectScene(LightingScene scene)
+        {
+            var path = BuildScenePath(_config.VirtualSwitchIdentifier, scene.ID);
+            _comms.SendRequest("Post", path, String.Empty);
+            CurrentLightingScene = scene;
+            OnSceneChanged(scene);
+        }
+
+        public List<LightingScene> LightingScenes { get; private set; }
+        public LightingScene CurrentLightingScene { get; private set; }
+        public event EventHandler<LightingSceneChangeEventArgs> LightingSceneChange;
+
+        private void OnSceneChanged(LightingScene scene)
+        {
+            var handler = LightingSceneChange;
+            if (handler == null)
+                return;
+
+            handler(this, new LightingSceneChangeEventArgs(scene));
+        }
     }   
 }
