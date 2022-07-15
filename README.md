@@ -1,4 +1,4 @@
-![PepperDash Logo](/images/Essentials-Text-Blue.png)
+![PepperDash Logo](/images/essentials-plugin-blue.png)
 ## License
 Provided under MIT license
 # PepperDash Essentials Enlighted Lighting Plugin (c) 2022
@@ -123,7 +123,8 @@ devjson:1 {"deviceKey":"lighting-1", "methodName":"RecallScene05", "params":[]}
 devjson:1 {"deviceKey":"lighting-1", "methodName":"RecallScene06", "params":[]}
 devjson:1 {"deviceKey":"lighting-1", "methodName":"PrintInformation", "params":[]}
 devjson:1 {"deviceKey":"lighting-1", "methodName":"GetCustomPath", "params":["/ems/api/org/floor/list"]}
-devjson:1 {"deviceKey":"lighting-1", "methodName":"GetCustomPath", "params":["/ems/api/org/switchgroups/list/{propertyType}/{PID}"]}
+devjson:1 {"deviceKey":"lighting-1", "methodName":"GetCustomPath", "params":["/ems/api/org/switchgroups/list/company/1"]}
+devjson:1 {"deviceKey":"lighting-1", "methodName":"GetCustomPath", "params":["/ems/api/org/switchgroups/list/floor/1"]}
 devjson:1 {"deviceKey":"lighting-1", "methodName":"GetCustomPath", "params":["/ems/api/org/switch/v1/getSwitchScenes/{floor_id}/{switch_name}"]}
 devjson:1 {"deviceKey":"lighting-1", "methodName":"PostCustomPath", "params":["/ems/api/org/switch/v1/op/applyScene/{switch_id}/{scene_id}?time=0"]}
 ```
